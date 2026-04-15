@@ -1,0 +1,33 @@
+# Core
+python-dotenv==1.0.1
+pandas==2.2.3
+numpy==1.26.4
+tqdm==4.66.5
+
+# RAG framework
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-huggingface==0.1.2
+
+# Embeddings & vector store
+sentence-transformers==3.2.1
+faiss-cpu==1.9.0
+
+# Models
+transformers==4.46.2
+accelerate==1.1.1
+# bitsandbytes==0.44.1   # GPU-only, runs on Kaggle not locally
+torch==2.5.1
+
+# Document processing
+pypdf==5.1.0
+beautifulsoup4==4.12.3
+requests==2.32.3
+
+# Evaluation
+ragas==0.2.6
+datasets==3.1.0
+
+# Notebooks
+jupyter==1.1.1
+ipywidgets==8.1.5
