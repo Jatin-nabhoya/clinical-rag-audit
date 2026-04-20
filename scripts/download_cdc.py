@@ -75,12 +75,13 @@ def main():
     urls = list(args.urls)
     if args.urls_file:
         p = Path(args.urls_file)
-        if p.exists():
-            urls += [l.strip() for l in p.read_text().splitlines()
-                     if l.strip() and not l.startswith("#")]
+        if not p.exists():
+            parser.error(f"--urls_file not found: {p}")
+        urls += [l.strip() for l in p.read_text().splitlines()
+                 if l.strip() and not l.startswith("#")]
 
     if not urls:
-        parser.error("Provide --urls or --urls_file")
+        parser.error("Provide --urls or a non-empty --urls_file")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     print(f"[cdc/who] fetching {len(urls)} pages → {OUT_DIR}")
