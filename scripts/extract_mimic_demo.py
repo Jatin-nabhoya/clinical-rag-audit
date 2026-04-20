@@ -13,21 +13,6 @@ Output:
     data/raw/mimic_demo/summaries/            — one .txt per admission
 """
 
-"""
-extract_mimic_demo.py — build readable clinical summaries from MIMIC-IV Demo
-structured tables (no free-text notes in the demo package).
-
-Joins: diagnoses_icd → admissions → prescriptions → labevents
-Filters to diabetes patients, writes one text summary per admission.
-
-Usage:
-    python scripts/extract_mimic_demo.py
-
-Output:
-    data/processed/mimic_diabetes_notes.csv   — one row per admission
-    data/raw/mimic_demo/summaries/            — one .txt per admission
-"""
-
 import os
 import sys
 from datetime import date
@@ -145,7 +130,7 @@ def main():
 
     # Merge lab item names
     labevents = labevents.merge(
-        lab_items[["itemid", "label"]],
+        lab_items[["itemid", "label", "ref_range_lower", "ref_range_upper"]],
         on="itemid", how="left"
     )
     # Keep only diabetes-relevant labs
