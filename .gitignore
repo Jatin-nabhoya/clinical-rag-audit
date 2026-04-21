@@ -22,6 +22,11 @@ results/*.json
 .env
 *.key
 
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
 # Jupyter
 .ipynb_checkpoints/
 
