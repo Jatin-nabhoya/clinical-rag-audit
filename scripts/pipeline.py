@@ -5,7 +5,7 @@ import json
 import uuid
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent  # clinical-rag-audit/
+from utils import ROOT, METADATA_CSV, CHUNKS_FILE
 
 from extract_text import extract_html, extract_xml, extract_json_medlineplus
 from chunk_documents import chunk_text, token_len
@@ -98,8 +98,8 @@ def run_pipeline(metadata_csv: str, output_path: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    OUTPUT = str(ROOT / "data/processed/chunks.jsonl")
-    chunks, stats = run_pipeline(str(ROOT / "data/metadata.csv"), OUTPUT)
+    OUTPUT = str(CHUNKS_FILE)
+    chunks, stats = run_pipeline(str(METADATA_CSV), OUTPUT)
 
     from collections import Counter
     by_source = Counter(c["metadata"]["source"] for c in chunks)

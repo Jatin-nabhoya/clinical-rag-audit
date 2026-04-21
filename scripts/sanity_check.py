@@ -2,10 +2,9 @@
 
 import json
 import random
-from pathlib import Path
 from collections import Counter
 
-CHUNKS_PATH = Path(__file__).resolve().parent.parent / "data/processed/chunks.jsonl"
+from utils import CHUNKS_CLEAN as CHUNKS_PATH
 
 with open(CHUNKS_PATH, "r", encoding="utf-8") as f:
     chunks = [json.loads(line) for line in f]

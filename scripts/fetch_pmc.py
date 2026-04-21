@@ -10,10 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from utils import METADATA_CSV                                                  # noqa: E402
 from download_pmc import search_pmids, fetch_xml, parse_title, DELAY, OUT_DIR  # noqa: E402
 from log_metadata import append_row                                             # noqa: E402
-
-METADATA_CSV = ROOT / "data" / "metadata.csv"
 
 FETCH_PLAN: list[tuple[str, str, int]] = [
     ("tuberculosis treatment",         "infectious_disease", 10),

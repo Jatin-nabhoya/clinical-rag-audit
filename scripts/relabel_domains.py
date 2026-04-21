@@ -3,11 +3,8 @@
 import csv
 import json
 from collections import defaultdict
-from pathlib import Path
 
-ROOT         = Path(__file__).resolve().parent.parent
-CHUNKS_PATH  = ROOT / "data" / "processed" / "chunks.jsonl"
-METADATA_CSV = ROOT / "data" / "metadata.csv"
+from utils import CHUNKS_FILE as CHUNKS_PATH, METADATA_CSV
 
 DOMAIN_MAP: dict[str, list[str]] = {
     "cardiology":         ["cardiac", "cardiovascular", "heart", "stroke",

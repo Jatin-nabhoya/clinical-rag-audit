@@ -1,11 +1,9 @@
 # scripts/clean_chunks.py
 import json
 import re
-from pathlib import Path
 from collections import Counter
 
-INPUT  = Path("data/processed/chunks.jsonl")
-OUTPUT = Path("data/processed/chunks_clean.jsonl")
+from utils import CHUNKS_FILE as INPUT, CHUNKS_CLEAN as OUTPUT
 
 # ── 1. LaTeX cleaner ──────────────────────────────────────────────────────────
 
