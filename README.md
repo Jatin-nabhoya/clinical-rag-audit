@@ -4,7 +4,7 @@
 
 **Team:** Jatin Nabhoya · Mohit Raiyani |
 
----
+----
 
 ## Table of Contents
 
