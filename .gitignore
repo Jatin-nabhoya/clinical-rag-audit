@@ -8,6 +8,9 @@ data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
+# Vector store (binary FAISS indexes — too large for git)
+data/vector_store/
+
 # Model cache
 *.bin
 *.safetensors
