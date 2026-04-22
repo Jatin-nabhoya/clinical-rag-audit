@@ -12,7 +12,7 @@
 2. [Phase Overview](#phase-overview)
 3. [Phase 1 — Environment & Data Collection](#phase-1--environment--data-collection) ✅
 4. [Phase 2 — Preprocessing & Chunking](#phase-2--preprocessing--chunking) ✅
-5. [Phase 3 — Embedding & Vector Store](#phase-3--embedding--vector-store) 🔜
+5. [Phase 3 — Embedding & Vector Store](#phase-3--embedding--vector-store) ✅
 6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) 🔜
 7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) 🔜
 8. [Project Structure](#project-structure)
@@ -39,7 +39,7 @@ Build a reproducible pipeline that:
 |---|-------|--------|------------|
 | 1 | Environment & Data Collection | ✅ Complete | 110 docs · `data/metadata.csv` verified |
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
-| 3 | Embedding & Vector Store | 🔜 Next | FAISS index |
+| 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
 | 4 | RAG Pipeline & Generation | 🔜 Upcoming | Model answer JSONs |
 | 5 | Evaluation & Audit | 🔜 Upcoming | RAGAS scores, hallucination report |
 
@@ -123,7 +123,10 @@ clinical-rag-audit/
 │
 ├── src/
 │   ├── ingestion/                ← Document loading & chunking (Phase 2 — complete)
-│   ├── retrieval/                ← Embeddings & FAISS (Phase 3)
+│   ├── retrieval/                ← Embeddings & FAISS (Phase 3 — complete)
+│   │   ├── embed.py              ← Builds FAISS indexes for general + medical models
+│   │   ├── retriever.py          ← Retriever class: retrieve(query, k) + format_context()
+│   │   └── inspect_index.py      ← Sanity check: 5 queries × 4 tiers × 2 indexes
 │   ├── generation/               ← LLM wrappers (Phase 4)
 │   └── evaluation/               ← RAGAS & manual scoring (Phase 5)
 │
@@ -376,15 +379,98 @@ python scripts/sanity_check.py   # verify distribution + 10 random chunks
 
 ---
 
-## Phase 3 — Embedding & Vector Store
+## Phase 3 — Embedding & Vector Store ✅
 
-> **Status: 🔜 Next**
+### 3.1 Embedding Models
 
-Planned work:
-- Embed chunks with `sentence-transformers` (candidate: `BioLORD-2023`).
-- Build a FAISS flat-L2 index over `chunks_clean.jsonl`.
-- Persist index to disk for reproducible retrieval.
-- Update `src/retrieval/` modules.
+Two models are used — one general-purpose baseline and one medical-domain model for ablation:
+
+| Key | Model | Dim | Size | Purpose |
+|-----|-------|-----|------|---------|
+| `general` | `sentence-transformers/all-MiniLM-L6-v2` | 384 | ~90 MB | Baseline |
+| `medical` | `pritamdeka/S-PubMedBert-MS-MARCO` | 768 | ~438 MB | Ablation |
+
+Both indexes use **FAISS IndexFlatIP** (exact cosine similarity via L2-normalized inner product).
+
+---
+
+### 3.2 Building Indexes — `src/retrieval/embed.py`
+
+```bash
+# Build general index (~1 min on CPU)
+python src/retrieval/embed.py --model general
+
+# Build medical index (~3 min on CPU)
+python src/retrieval/embed.py --model medical
+
+# Build both at once
+python src/retrieval/embed.py --model all
+```
+
+Each model saves 3 files to its own directory:
+
+```
+data/vector_store/
+├── general/
+│   ├── faiss_index.bin      ← FAISS index (4.2 MB)
+│   ├── chunks_meta.jsonl    ← chunk text + metadata (row i = vector i)
+│   └── embed_config.json    ← model name, dim, num_chunks
+└── medical/
+    ├── faiss_index.bin      ← FAISS index (8.5 MB)
+    ├── chunks_meta.jsonl
+    └── embed_config.json
+```
+
+> `data/vector_store/` is git-ignored (binary files). Rebuild locally by running `embed.py`.
+
+---
+
+### 3.3 Retriever — `src/retrieval/retriever.py`
+
+```python
+from src.retrieval.retriever import Retriever
+
+r = Retriever()                                      # general (default)
+r = Retriever("data/vector_store/medical")           # medical ablation
+
+results = r.retrieve("What is the treatment for sepsis?", k=5)
+context = r.format_context(results)   # formatted string for LLM prompt
+```
+
+Each result contains: `chunk_id`, `text`, `score` (cosine 0–1), `rank`, `metadata`.
+
+---
+
+### 3.4 Sanity Check — `src/retrieval/inspect_index.py`
+
+Tests both indexes with 5 queries across 4 evaluation tiers:
+
+```bash
+python src/retrieval/inspect_index.py --index all      # compare both
+python src/retrieval/inspect_index.py --index general
+python src/retrieval/inspect_index.py --index medical
+```
+
+| Tier | Query type | Expected top-1 score |
+|------|-----------|----------------------|
+| answerable | Direct clinical question | > 0.40 |
+| partial | Indirect / cross-domain | 0.15 – 0.45 |
+| ambiguous | Multiple valid answers | Any |
+| unanswerable | Out-of-scope question | < 0.25 |
+
+---
+
+### 3.5 Phase 3 Results
+
+| Query | General score | Medical score |
+|-------|--------------|--------------|
+| First-line medications for hypertension | 0.46 | 0.90 |
+| Medications for tuberculosis | 0.55 | 0.93 |
+| Kidney disease + blood pressure | 0.46 | 0.91 |
+| Risks of beta blockers | 0.49 | 0.91 |
+| AI market size 2024 (unanswerable) | 0.39 | 0.89 |
+
+**Key finding:** Medical scores cluster near 0.90 due to high-dimensional PubMed space — the *ranking* is what matters for ablation, not the absolute value. The unanswerable query returning high scores on both models means the LLM will need an explicit refusal prompt in Phase 4.
 
 ---
 
@@ -442,6 +528,11 @@ python scripts/relabel_domains.py   # Fix domain labels on existing chunks
 python scripts/fetch_pmc.py         # Fetch more articles for balance + re-run pipeline
 python scripts/clean_chunks.py      # Remove LaTeX, micro-chunks → chunks_clean.jsonl
 python scripts/sanity_check.py      # Verify output
+
+# 7. Build vector indexes (Phase 3)
+python src/retrieval/embed.py --model general   # ~1 min, 4.2 MB index
+python src/retrieval/embed.py --model medical   # ~3 min, 8.5 MB index
+python src/retrieval/inspect_index.py --index all  # sanity check both
 ```
 
 ---
@@ -464,7 +555,7 @@ python scripts/sanity_check.py      # Verify output
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-21 · **Phase 2 complete**
+> Last updated: 2026-04-22 · **Phase 3 complete**
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
