@@ -13,7 +13,7 @@
 3. [Phase 1 — Environment & Data Collection](#phase-1--environment--data-collection) ✅
 4. [Phase 2 — Preprocessing & Chunking](#phase-2--preprocessing--chunking) ✅
 5. [Phase 3 — Embedding & Vector Store](#phase-3--embedding--vector-store) ✅
-6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) 🔜
+6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) ✅
 7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) 🔜
 8. [Project Structure](#project-structure)
 9. [Quick Start](#quick-start)
@@ -40,7 +40,7 @@ Build a reproducible pipeline that:
 | 1 | Environment & Data Collection | ✅ Complete | 110 docs · `data/metadata.csv` verified |
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
-| 4 | RAG Pipeline & Generation | 🔜 Upcoming | Model answer JSONs |
+| 4 | RAG Pipeline & Generation | ✅ Complete | `src/generation/` · smoke test passes locally |
 | 5 | Evaluation & Audit | 🔜 Upcoming | RAGAS scores, hallucination report |
 
 ---
@@ -116,7 +116,8 @@ clinical-rag-audit/
 │   ├── pipeline.py               ← Full pipeline: Extract → Chunk → Metadata → Save JSONL
 │   ├── relabel_domains.py        ← Keyword-scores existing chunks and fixes domain labels
 │   ├── clean_chunks.py           ← Removes LaTeX noise, micro-chunks, re-labels domains
-│   └── sanity_check.py           ← Prints stats + 10 random chunks from chunks_clean.jsonl
+│   ├── sanity_check.py           ← Prints stats + 10 random chunks from chunks_clean.jsonl
+│   └── test_rag_generation.py    ← Phase 4 smoke test: one question × all 3 LLMs
 │
 ├── notebooks/
 │   └── 00_setup_check.ipynb      ← Environment & import verification notebook
@@ -127,7 +128,12 @@ clinical-rag-audit/
 │   │   ├── embed.py              ← Builds FAISS indexes for general + medical models
 │   │   ├── retriever.py          ← Retriever class: retrieve(query, k) + format_context()
 │   │   └── inspect_index.py      ← Sanity check: 5 queries × 4 tiers × 2 indexes
-│   ├── generation/               ← LLM wrappers (Phase 4)
+│   ├── generation/               ← LLM wrappers & RAG pipeline (Phase 4 — complete)
+│   │   ├── config.py             ← Model registry + lazy 4-bit NF4 BitsAndBytes config
+│   │   ├── prompts.py            ← RAG + no-RAG clinical prompt templates
+│   │   ├── llm_wrapper.py        ← Unified LLMWrapper (Llama-3 / Mistral / Phi-3)
+│   │   ├── rag_pipeline.py       ← RAGPipeline: retrieve → prompt → generate
+│   │   └── __init__.py           ← Public API exports
 │   └── evaluation/               ← RAGAS & manual scoring (Phase 5)
 │
 └── results/                      ← Output tables & charts (Phase 5)
@@ -474,15 +480,119 @@ python src/retrieval/inspect_index.py --index medical
 
 ---
 
-## Phase 4 — RAG Pipeline & Generation
+## Phase 4 — RAG Pipeline & Generation ✅
 
-> **Status: 🔜 Upcoming**
+### 4.1 Overview
 
-Planned work:
-- Load each LLM via HuggingFace `transformers` (Llama-3-8B, Mistral-7B, Phi-3-mini).
-- Wire retriever → prompt template → generator using LangChain.
-- Run on the fixed clinical QA test set from BioASQ / MedQuAD.
-- Save model answers to `results/`.
+Three open-source LLMs answer clinical questions using the FAISS medical index as the retrieval backbone.  
+All models run with **identical 4-bit NF4 quantization** so quantization is not a confound in the hallucination comparison.
+
+| Model key | HuggingFace ID | Parameters |
+|-----------|---------------|------------|
+| `llama3`  | `meta-llama/Meta-Llama-3-8B-Instruct` | 8B |
+| `mistral` | `mistralai/Mistral-7B-Instruct-v0.2`  | 7B |
+| `phi3`    | `microsoft/Phi-3-mini-4k-instruct`    | 3.8B |
+
+> **Note:** Models require a CUDA GPU (≥ 16 GB VRAM, e.g. Kaggle T4).  
+> `HF_TOKEN` in `.env` is required for Llama-3 (gated model).
+
+---
+
+### 4.2 Generation Config — `src/generation/config.py`
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Quantization | 4-bit NF4, double-quant, bfloat16 compute | Fits all 3 models on T4 / 16 GB |
+| `do_sample` | `False` (greedy) | Deterministic output — required for reproducible hallucination auditing |
+| `temperature` | `0.0` | Redundant with greedy, explicit for clarity |
+| `max_new_tokens` | `512` | Sufficient for clinical answers |
+| `repetition_penalty` | `1.1` | Guards against loops in small quantized models |
+| `top_k` (retrieval) | `5` | Top-5 chunks passed as context |
+
+---
+
+### 4.3 Prompt Templates — `src/generation/prompts.py`
+
+**RAG prompt** (`build_rag_prompt`) — strictly grounded:
+
+```
+SYSTEM: You are a clinical information assistant. Answer using ONLY the provided CONTEXT.
+        If context is insufficient, respond with the exact refusal sentence.
+        Do not speculate, infer, or invent statistics/dosages.
+
+USER:   CONTEXT:
+        <retrieved chunks>
+
+        QUESTION: <question>
+
+        ANSWER:
+```
+
+**No-RAG prompt** (`build_no_rag_prompt`) — parametric knowledge only (Phase 5 ablation).
+
+---
+
+### 4.4 LLM Wrapper — `src/generation/llm_wrapper.py`
+
+Handles per-model quirks automatically:
+
+- **Mistral-7B** does not accept a `system` role in its chat template — the system prompt is folded into the first user turn.
+- `apply_chat_template` handles all format differences (Llama-3, Mistral, Phi-3) uniformly.
+- `unload()` releases GPU memory between models via `gc.collect() + torch.cuda.empty_cache()`.
+
+```python
+from src.generation import LLMWrapper
+
+llm = LLMWrapper("mistral")
+answer = llm.generate(system_prompt, user_prompt)
+llm.unload()   # free GPU before loading next model
+```
+
+---
+
+### 4.5 RAG Pipeline — `src/generation/rag_pipeline.py`
+
+```python
+from src.retrieval.retriever import Retriever
+from src.generation import LLMWrapper, RAGPipeline
+
+retriever = Retriever("data/vector_store/medical")
+llm       = LLMWrapper("mistral")
+rag       = RAGPipeline(llm, retriever, k=5)
+
+result = rag.answer("What are the first-line treatments for Type 2 diabetes?")
+# result keys: model, question, use_rag, k, retrieved_chunks, context, answer
+```
+
+`use_rag=False` runs the ablation (no context → pure parametric knowledge) for Phase 5.
+
+---
+
+### 4.6 Smoke Test — `scripts/test_rag_generation.py`
+
+Runs one clinical question through all three models sequentially, unloading GPU memory between each:
+
+```bash
+# Run on a CUDA GPU (Kaggle / Colab T4)
+python scripts/test_rag_generation.py --model mistral   # single model
+python scripts/test_rag_generation.py --model all       # all three
+```
+
+Expected output per model:
+```
+──────────────────────────────────────────────────────────────────────
+  Model: MISTRAL
+──────────────────────────────────────────────────────────────────────
+
+Question : What are the common symptoms and first-line treatments for Type 2 diabetes?
+
+Top retrieved chunk:
+  score=0.8xxx | pmc_... | endocrinology
+  Type 2 diabetes is characterized by ...
+
+Answer:
+  Based on the provided context, the common symptoms of Type 2 diabetes include ...
+```
 
 ---
 
@@ -533,6 +643,10 @@ python scripts/sanity_check.py      # Verify output
 python src/retrieval/embed.py --model general   # ~1 min, 4.2 MB index
 python src/retrieval/embed.py --model medical   # ~3 min, 8.5 MB index
 python src/retrieval/inspect_index.py --index all  # sanity check both
+
+# 8. Run RAG generation (Phase 4) — requires CUDA GPU
+python scripts/test_rag_generation.py --model mistral   # test one model first
+python scripts/test_rag_generation.py --model all       # run all three
 ```
 
 ---
@@ -555,7 +669,7 @@ python src/retrieval/inspect_index.py --index all  # sanity check both
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-22 · **Phase 3 complete**
+> Last updated: 2026-04-22 · **Phase 4 complete**
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
