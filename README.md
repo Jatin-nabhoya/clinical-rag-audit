@@ -14,7 +14,7 @@
 4. [Phase 2 — Preprocessing & Chunking](#phase-2--preprocessing--chunking) ✅
 5. [Phase 3 — Embedding & Vector Store](#phase-3--embedding--vector-store) ✅
 6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) ✅
-7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) 🔜
+7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) 🔄
 8. [Project Structure](#project-structure)
 9. [Quick Start](#quick-start)
 10. [Data Sources & Licenses](#data-sources--licenses)
@@ -41,7 +41,7 @@ Build a reproducible pipeline that:
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
 | 4 | RAG Pipeline & Generation | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals |
-| 5 | Evaluation & Audit | 🔜 Upcoming | RAGAS scores, hallucination report |
+| 5 | Evaluation & Audit | 🔄 In Progress | Tooling built · 110-question gold set (annotating) |
 
 ---
 
@@ -99,7 +99,8 @@ clinical-rag-audit/
 │       ├── chunks.jsonl              ← Raw pipeline output (2 896 chunks, kept as baseline)
 │       ├── chunks_clean.jsonl        ← Production-ready chunks (2 753 chunks) ← USE THIS
 │       ├── bioasq_diabetes_qa.json   ← BioASQ diabetes Q&A (evaluation set)
-│       └── medquad_diabetes_qa.json  ← MedQuAD diabetes Q&A (evaluation set)
+│       ├── medquad_diabetes_qa.json  ← MedQuAD diabetes Q&A (evaluation set)
+│       └── eval_questions.jsonl      ← Phase 5 gold set (110 questions, annotating)
 │
 ├── scripts/
 │   ├── download_pmc.py           ← Fetches PMC open-access XMLs via NCBI E-utilities
@@ -117,7 +118,13 @@ clinical-rag-audit/
 │   ├── relabel_domains.py        ← Keyword-scores existing chunks and fixes domain labels
 │   ├── clean_chunks.py           ← Removes LaTeX noise, micro-chunks, re-labels domains
 │   ├── sanity_check.py           ← Prints stats + 10 random chunks from chunks_clean.jsonl
-│   └── test_rag_generation.py    ← Phase 4 smoke test: one question × all 3 LLMs
+│   ├── test_rag_generation.py    ← Phase 4 smoke test: one question × all 3 LLMs
+│   ├── explore_corpus.py         ← Phase 5 topic inventory: dense/thin/absent coverage map
+│   ├── annotate_questions.py     ← Phase 5 interactive annotation CLI
+│   └── validate_questions.py     ← Phase 5 batch validator (schema, chunk IDs, retrieval)
+│
+├── docs/
+│   └── annotation_guidelines.md  ← Phase 5 tier definitions, worked examples, edge case rules
 │
 ├── notebooks/
 │   └── 00_setup_check.ipynb      ← Environment & import verification notebook
@@ -134,7 +141,7 @@ clinical-rag-audit/
 │   │   ├── llm_wrapper.py        ← Unified LLMWrapper (Llama-3 / Mistral / Phi-3)
 │   │   ├── rag_pipeline.py       ← RAGPipeline: retrieve → prompt → generate
 │   │   └── __init__.py           ← Public API exports
-│   └── evaluation/               ← RAGAS & manual scoring (Phase 5)
+│   └── evaluation/               ← RAGAS & manual scoring (Phase 5 — upcoming)
 │
 └── results/                      ← Model outputs & evaluation (Phase 4+ committed)
     ├── phase4_all_results.csv        ← 2,169 rows — all 3 models combined
@@ -627,15 +634,107 @@ Full run: **723 questions × 3 models = 2,169 total rows** saved to `results/`.
 
 ---
 
-## Phase 5 — Evaluation & Audit
+## Phase 5 — Evaluation & Audit 🔄
 
-> **Status: 🔜 Upcoming**
+### 5.1 Overview
 
-Planned work:
-- Score each answer with **RAGAS** metrics: faithfulness, answer relevancy, context precision, context recall.
-- Manual review of sampled hallucinated answers.
-- Cross-model comparison tables and visualizations.
-- Final report in `results/`.
+Phase 5 builds a **110-question gold evaluation set** with tier labels, gold answers, and source chunk IDs, then scores all Phase 4 model answers with RAGAS metrics.
+
+---
+
+### 5.2 Question Tiers
+
+Questions are split across 4 tiers to probe different hallucination failure modes:
+
+| Tier | Count | Hallucination risk tested | Expected model behavior |
+|------|-------|--------------------------|-------------------------|
+| Answerable | 30 | Factual drift (changes numbers/drugs) | `cite_and_answer` |
+| Partial | 30 | Gap filling (invents missing info) | `acknowledge_gap` |
+| Ambiguous | 20 | False certainty (picks one answer arbitrarily) | `present_options` |
+| Unanswerable | 30 | Fabrication (makes up answer from parametric knowledge) | `refuse` |
+
+Sub-tiers within each tier (e.g. `direct_lookup`, `missing_subgroup`, `in_domain_absent`) allow fine-grained analysis in Phase 5 RAGAS scoring.
+
+---
+
+### 5.3 Corpus Topic Map — `scripts/explore_corpus.py`
+
+Run before writing any questions to understand which topics are covered:
+
+```bash
+python scripts/explore_corpus.py
+```
+
+Key findings from the corpus:
+
+| Coverage | Terms | Use for |
+|----------|-------|---------|
+| Dense (≥30 chunks) | infection, liver, cancer, hypertension, HIV, sepsis, vaccination, insulin, cirrhosis, tuberculosis | Answerable questions |
+| Thin (5–29 chunks) | metformin, glycemic, arrhythmia, nephropathy, beta-blocker, lymphoma, fracture | Partial questions |
+| Absent (<5 chunks) | dialysis, osteoporosis, emphysema, leukemia, inhaler | Unanswerable questions |
+
+---
+
+### 5.4 Annotation Tools
+
+#### Annotation guidelines — `docs/annotation_guidelines.md`
+Tier definitions, 6 worked examples, edge case decision rules, and a self-consistency re-annotation protocol. **Read before writing question #1.**
+
+#### Interactive annotator — `scripts/annotate_questions.py`
+Field-by-field CLI that appends to `data/processed/eval_questions.jsonl`. Validates tier/sub_tier/expected_behavior on input and shows a preview before saving.
+
+```bash
+python scripts/annotate_questions.py
+```
+
+#### Batch validator — `scripts/validate_questions.py`
+Run after every ~20 questions. Checks:
+- Schema — all required fields present and values valid
+- Chunk IDs — `gold_sources` UUIDs exist in `chunks_clean.jsonl`
+- Retrieval — for answerable/partial, gold source appears in retriever top-10
+- Unanswerable sanity — top-1 retrieval score < 0.30
+- Distribution — tier counts vs. targets
+
+```bash
+python scripts/validate_questions.py             # after each batch
+python scripts/validate_questions.py --strict    # exit 1 if any errors (CI use)
+python scripts/validate_questions.py --no-retrieval  # fast check, no GPU
+```
+
+---
+
+### 5.5 Gold Set Schema — `data/processed/eval_questions.jsonl`
+
+```json
+{
+  "question_id":         "q_001",
+  "question":            "What is the first-line antibiotic for community-acquired pneumonia?",
+  "tier":                "answerable",
+  "sub_tier":            "direct_lookup",
+  "hallucination_target":"factual_drift",
+  "gold_answer":         "Amoxicillin 500 mg three times daily for 5 days...",
+  "gold_sources":        ["<chunk-uuid>"],
+  "expected_behavior":   "cite_and_answer",
+  "domain":              "pulmonology",
+  "notes":               "Source: WHO CAP guidelines chunk",
+  "annotated_on":        "2026-04-24",
+  "difficulty":          1
+}
+```
+
+---
+
+### 5.6 Annotation Pacing
+
+| Session | Focus tier | Rationale |
+|---------|-----------|-----------|
+| 1 (~22 questions) | Answerable | Easiest — warms up corpus intuition |
+| 2 (~22 questions) | Unanswerable | Mechanical — no gold answer needed |
+| 3 (~22 questions) | Partial | Requires knowing what corpus doesn't cover |
+| 4 (~22 questions) | Ambiguous | Hardest — save for when sharpest |
+| 5 (~22 questions) | Gap fill | Use validator output to hit distribution targets |
+
+Run `python scripts/validate_questions.py` after every session.
 
 ---
 
@@ -678,6 +777,12 @@ python src/retrieval/inspect_index.py --index all  # sanity check both
 # 8. Run RAG generation (Phase 4) — requires CUDA GPU
 python scripts/test_rag_generation.py --model mistral   # test one model first
 python scripts/test_rag_generation.py --model all       # run all three
+
+# 9. Build evaluation question set (Phase 5)
+python scripts/explore_corpus.py          # see topic coverage map first
+# read docs/annotation_guidelines.md
+python scripts/annotate_questions.py      # interactive annotation (110 questions)
+python scripts/validate_questions.py      # validate after every ~20 questions
 ```
 
 ---
@@ -700,7 +805,7 @@ python scripts/test_rag_generation.py --model all       # run all three
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-23 · **Phase 4 complete** · 2,169 model answers generated
+> Last updated: 2026-04-24 · **Phase 5 in progress** · annotation tooling built · gold set pending
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
