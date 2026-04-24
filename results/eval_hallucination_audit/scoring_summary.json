@@ -1,0 +1,496 @@
+{
+  "llama3_8b": {
+    "answerable": {
+      "n": 30,
+      "refused_n": 22,
+      "answered_n": 8,
+      "refusal_rate": 0.733,
+      "label_counts": {
+        "over_refusal": 22,
+        "grounded": 7,
+        "factual_drift": 1
+      },
+      "label_pct": {
+        "over_refusal": 0.733,
+        "grounded": 0.233,
+        "factual_drift": 0.033
+      },
+      "rouge_l": {
+        "mean": 0.162,
+        "lo": 0.13,
+        "hi": 0.198,
+        "n": 8
+      },
+      "keyword_recall": {
+        "mean": 0.211,
+        "lo": 0.181,
+        "hi": 0.238
+      },
+      "context_overlap": {
+        "mean": 0.572,
+        "lo": 0.502,
+        "hi": 0.65
+      }
+    },
+    "partial": {
+      "n": 31,
+      "refused_n": 25,
+      "answered_n": 6,
+      "refusal_rate": 0.806,
+      "label_counts": {
+        "gap_filling": 6,
+        "over_refusal": 25
+      },
+      "label_pct": {
+        "gap_filling": 0.194,
+        "over_refusal": 0.806
+      },
+      "rouge_l": {
+        "mean": 0.13,
+        "lo": 0.096,
+        "hi": 0.155,
+        "n": 6
+      },
+      "keyword_recall": {
+        "mean": 0.142,
+        "lo": 0.085,
+        "hi": 0.2
+      },
+      "context_overlap": {
+        "mean": 0.54,
+        "lo": 0.338,
+        "hi": 0.703
+      }
+    },
+    "ambiguous": {
+      "n": 20,
+      "refused_n": 13,
+      "answered_n": 7,
+      "refusal_rate": 0.65,
+      "label_counts": {
+        "over_refusal": 13,
+        "grounded": 7
+      },
+      "label_pct": {
+        "over_refusal": 0.65,
+        "grounded": 0.35
+      },
+      "rouge_l": {
+        "mean": 0.1,
+        "lo": 0.089,
+        "hi": 0.112,
+        "n": 7
+      },
+      "keyword_recall": {
+        "mean": 0.172,
+        "lo": 0.118,
+        "hi": 0.232
+      },
+      "context_overlap": {
+        "mean": 0.584,
+        "lo": 0.463,
+        "hi": 0.716
+      }
+    },
+    "unanswerable": {
+      "n": 29,
+      "refused_n": 29,
+      "answered_n": 0,
+      "refusal_rate": 1.0,
+      "label_counts": {
+        "correct_refusal": 29
+      },
+      "label_pct": {
+        "correct_refusal": 1.0
+      },
+      "rouge_l": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0,
+        "n": 0
+      },
+      "keyword_recall": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "context_overlap": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      }
+    },
+    "ALL": {
+      "n": 110,
+      "refused_n": 89,
+      "answered_n": 21,
+      "refusal_rate": 0.809,
+      "label_counts": {
+        "over_refusal": 60,
+        "grounded": 14,
+        "factual_drift": 1,
+        "gap_filling": 6,
+        "correct_refusal": 29
+      },
+      "label_pct": {
+        "over_refusal": 0.545,
+        "grounded": 0.127,
+        "factual_drift": 0.009,
+        "gap_filling": 0.055,
+        "correct_refusal": 0.264
+      },
+      "rouge_l": {
+        "mean": 0.132,
+        "lo": 0.114,
+        "hi": 0.152,
+        "n": 21
+      },
+      "keyword_recall": {
+        "mean": 0.178,
+        "lo": 0.151,
+        "hi": 0.209
+      },
+      "context_overlap": {
+        "mean": 0.566,
+        "lo": 0.497,
+        "hi": 0.633
+      }
+    }
+  },
+  "mistral_7b": {
+    "answerable": {
+      "n": 30,
+      "refused_n": 9,
+      "answered_n": 21,
+      "refusal_rate": 0.3,
+      "label_counts": {
+        "grounded": 16,
+        "over_refusal": 9,
+        "factual_drift": 5
+      },
+      "label_pct": {
+        "grounded": 0.533,
+        "over_refusal": 0.3,
+        "factual_drift": 0.167
+      },
+      "rouge_l": {
+        "mean": 0.15,
+        "lo": 0.13,
+        "hi": 0.171,
+        "n": 21
+      },
+      "keyword_recall": {
+        "mean": 0.271,
+        "lo": 0.22,
+        "hi": 0.323
+      },
+      "context_overlap": {
+        "mean": 0.491,
+        "lo": 0.421,
+        "hi": 0.563
+      }
+    },
+    "partial": {
+      "n": 31,
+      "refused_n": 18,
+      "answered_n": 13,
+      "refusal_rate": 0.581,
+      "label_counts": {
+        "gap_filling": 5,
+        "grounded": 8,
+        "over_refusal": 18
+      },
+      "label_pct": {
+        "gap_filling": 0.161,
+        "grounded": 0.258,
+        "over_refusal": 0.581
+      },
+      "rouge_l": {
+        "mean": 0.187,
+        "lo": 0.153,
+        "hi": 0.22,
+        "n": 13
+      },
+      "keyword_recall": {
+        "mean": 0.202,
+        "lo": 0.161,
+        "hi": 0.239
+      },
+      "context_overlap": {
+        "mean": 0.532,
+        "lo": 0.402,
+        "hi": 0.652
+      }
+    },
+    "ambiguous": {
+      "n": 20,
+      "refused_n": 12,
+      "answered_n": 8,
+      "refusal_rate": 0.6,
+      "label_counts": {
+        "grounded": 7,
+        "over_refusal": 12,
+        "false_certainty": 1
+      },
+      "label_pct": {
+        "grounded": 0.35,
+        "over_refusal": 0.6,
+        "false_certainty": 0.05
+      },
+      "rouge_l": {
+        "mean": 0.097,
+        "lo": 0.078,
+        "hi": 0.116,
+        "n": 8
+      },
+      "keyword_recall": {
+        "mean": 0.167,
+        "lo": 0.107,
+        "hi": 0.23
+      },
+      "context_overlap": {
+        "mean": 0.434,
+        "lo": 0.267,
+        "hi": 0.594
+      }
+    },
+    "unanswerable": {
+      "n": 29,
+      "refused_n": 27,
+      "answered_n": 2,
+      "refusal_rate": 0.931,
+      "label_counts": {
+        "correct_refusal": 27,
+        "fabrication": 2
+      },
+      "label_pct": {
+        "correct_refusal": 0.931,
+        "fabrication": 0.069
+      },
+      "rouge_l": {
+        "mean": 0.35,
+        "lo": 0.138,
+        "hi": 0.562,
+        "n": 2
+      },
+      "keyword_recall": {
+        "mean": 0.571,
+        "lo": 0.429,
+        "hi": 0.714
+      },
+      "context_overlap": {
+        "mean": 0.285,
+        "lo": 0.2,
+        "hi": 0.37
+      }
+    },
+    "ALL": {
+      "n": 110,
+      "refused_n": 66,
+      "answered_n": 44,
+      "refusal_rate": 0.6,
+      "label_counts": {
+        "grounded": 31,
+        "over_refusal": 39,
+        "factual_drift": 5,
+        "gap_filling": 5,
+        "false_certainty": 1,
+        "correct_refusal": 27,
+        "fabrication": 2
+      },
+      "label_pct": {
+        "grounded": 0.282,
+        "over_refusal": 0.355,
+        "factual_drift": 0.045,
+        "gap_filling": 0.045,
+        "false_certainty": 0.009,
+        "correct_refusal": 0.245,
+        "fabrication": 0.018
+      },
+      "rouge_l": {
+        "mean": 0.16,
+        "lo": 0.137,
+        "hi": 0.187,
+        "n": 44
+      },
+      "keyword_recall": {
+        "mean": 0.245,
+        "lo": 0.207,
+        "hi": 0.285
+      },
+      "context_overlap": {
+        "mean": 0.483,
+        "lo": 0.42,
+        "hi": 0.544
+      }
+    }
+  },
+  "phi3_mini": {
+    "answerable": {
+      "n": 30,
+      "refused_n": 15,
+      "answered_n": 15,
+      "refusal_rate": 0.5,
+      "label_counts": {
+        "factual_drift": 8,
+        "over_refusal": 15,
+        "grounded": 7
+      },
+      "label_pct": {
+        "factual_drift": 0.267,
+        "over_refusal": 0.5,
+        "grounded": 0.233
+      },
+      "rouge_l": {
+        "mean": 0.112,
+        "lo": 0.094,
+        "hi": 0.131,
+        "n": 15
+      },
+      "keyword_recall": {
+        "mean": 0.301,
+        "lo": 0.22,
+        "hi": 0.388
+      },
+      "context_overlap": {
+        "mean": 0.2,
+        "lo": 0.151,
+        "hi": 0.25
+      }
+    },
+    "partial": {
+      "n": 31,
+      "refused_n": 19,
+      "answered_n": 12,
+      "refusal_rate": 0.613,
+      "label_counts": {
+        "over_refusal": 19,
+        "gap_filling": 11,
+        "grounded": 1
+      },
+      "label_pct": {
+        "over_refusal": 0.613,
+        "gap_filling": 0.355,
+        "grounded": 0.032
+      },
+      "rouge_l": {
+        "mean": 0.099,
+        "lo": 0.083,
+        "hi": 0.115,
+        "n": 12
+      },
+      "keyword_recall": {
+        "mean": 0.293,
+        "lo": 0.242,
+        "hi": 0.346
+      },
+      "context_overlap": {
+        "mean": 0.205,
+        "lo": 0.144,
+        "hi": 0.286
+      }
+    },
+    "ambiguous": {
+      "n": 20,
+      "refused_n": 13,
+      "answered_n": 7,
+      "refusal_rate": 0.65,
+      "label_counts": {
+        "over_refusal": 13,
+        "false_certainty": 3,
+        "grounded": 4
+      },
+      "label_pct": {
+        "over_refusal": 0.65,
+        "false_certainty": 0.15,
+        "grounded": 0.2
+      },
+      "rouge_l": {
+        "mean": 0.078,
+        "lo": 0.067,
+        "hi": 0.089,
+        "n": 7
+      },
+      "keyword_recall": {
+        "mean": 0.208,
+        "lo": 0.159,
+        "hi": 0.263
+      },
+      "context_overlap": {
+        "mean": 0.195,
+        "lo": 0.131,
+        "hi": 0.28
+      }
+    },
+    "unanswerable": {
+      "n": 29,
+      "refused_n": 28,
+      "answered_n": 1,
+      "refusal_rate": 0.966,
+      "label_counts": {
+        "correct_refusal": 28,
+        "fabrication": 1
+      },
+      "label_pct": {
+        "correct_refusal": 0.966,
+        "fabrication": 0.034
+      },
+      "rouge_l": {
+        "mean": 0.04,
+        "lo": 0.04,
+        "hi": 0.04,
+        "n": 1
+      },
+      "keyword_recall": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "context_overlap": {
+        "mean": 0.135,
+        "lo": 0.135,
+        "hi": 0.135
+      }
+    },
+    "ALL": {
+      "n": 110,
+      "refused_n": 75,
+      "answered_n": 35,
+      "refusal_rate": 0.682,
+      "label_counts": {
+        "factual_drift": 8,
+        "over_refusal": 47,
+        "grounded": 12,
+        "gap_filling": 11,
+        "false_certainty": 3,
+        "correct_refusal": 28,
+        "fabrication": 1
+      },
+      "label_pct": {
+        "factual_drift": 0.073,
+        "over_refusal": 0.427,
+        "grounded": 0.109,
+        "gap_filling": 0.1,
+        "false_certainty": 0.027,
+        "correct_refusal": 0.255,
+        "fabrication": 0.009
+      },
+      "rouge_l": {
+        "mean": 0.099,
+        "lo": 0.088,
+        "hi": 0.11,
+        "n": 35
+      },
+      "keyword_recall": {
+        "mean": 0.279,
+        "lo": 0.24,
+        "hi": 0.326
+      },
+      "context_overlap": {
+        "mean": 0.199,
+        "lo": 0.168,
+        "hi": 0.239
+      }
+    }
+  }
+}
