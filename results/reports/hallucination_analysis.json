@@ -1,0 +1,190 @@
+{
+  "local_analysis": {
+    "llama3_8b": {
+      "answerable": {
+        "n": 30,
+        "refusal_rate": 0.7333,
+        "rouge_l_avg": 0.1621,
+        "keyword_recall": 0.211,
+        "answer_len_avg": 50.2333,
+        "answered_n": 8,
+        "refused_n": 22
+      },
+      "partial": {
+        "n": 31,
+        "refusal_rate": 0.8065,
+        "rouge_l_avg": 0.1296,
+        "keyword_recall": 0.1424,
+        "answer_len_avg": 45.7742,
+        "answered_n": 6,
+        "refused_n": 25
+      },
+      "ambiguous": {
+        "n": 20,
+        "refusal_rate": 0.65,
+        "rouge_l_avg": 0.1001,
+        "keyword_recall": 0.1718,
+        "answer_len_avg": 50.8,
+        "answered_n": 7,
+        "refused_n": 13
+      },
+      "unanswerable": {
+        "n": 29,
+        "refusal_rate": 1.0,
+        "rouge_l_avg": 0.0,
+        "keyword_recall": 0.0,
+        "answer_len_avg": 46.8966,
+        "answered_n": 0,
+        "refused_n": 29
+      },
+      "ALL": {
+        "n": 110,
+        "refusal_rate": 0.8091,
+        "rouge_l_avg": 0.1321,
+        "keyword_recall": 0.1783,
+        "answer_len_avg": 48.2,
+        "answered_n": 21,
+        "refused_n": 89
+      }
+    },
+    "mistral_7b": {
+      "answerable": {
+        "n": 30,
+        "refusal_rate": 0.2667,
+        "rouge_l_avg": 0.1472,
+        "keyword_recall": 0.2656,
+        "answer_len_avg": 79.4667,
+        "answered_n": 22,
+        "refused_n": 8
+      },
+      "partial": {
+        "n": 31,
+        "refusal_rate": 0.5484,
+        "rouge_l_avg": 0.181,
+        "keyword_recall": 0.2048,
+        "answer_len_avg": 56.3226,
+        "answered_n": 14,
+        "refused_n": 17
+      },
+      "ambiguous": {
+        "n": 20,
+        "refusal_rate": 0.55,
+        "rouge_l_avg": 0.0974,
+        "keyword_recall": 0.1527,
+        "answer_len_avg": 55.3,
+        "answered_n": 9,
+        "refused_n": 11
+      },
+      "unanswerable": {
+        "n": 29,
+        "refusal_rate": 0.8966,
+        "rouge_l_avg": 0.284,
+        "keyword_recall": 0.5238,
+        "answer_len_avg": 44.3793,
+        "answered_n": 3,
+        "refused_n": 26
+      },
+      "ALL": {
+        "n": 110,
+        "refusal_rate": 0.5636,
+        "rouge_l_avg": 0.1562,
+        "keyword_recall": 0.2428,
+        "answer_len_avg": 59.3,
+        "answered_n": 48,
+        "refused_n": 62
+      }
+    },
+    "phi3_mini": {
+      "answerable": {
+        "n": 30,
+        "refusal_rate": 0.2,
+        "rouge_l_avg": 0.1172,
+        "keyword_recall": 0.2583,
+        "answer_len_avg": 99.2,
+        "answered_n": 24,
+        "refused_n": 6
+      },
+      "partial": {
+        "n": 31,
+        "refusal_rate": 0.1935,
+        "rouge_l_avg": 0.1083,
+        "keyword_recall": 0.2691,
+        "answer_len_avg": 86.4516,
+        "answered_n": 25,
+        "refused_n": 6
+      },
+      "ambiguous": {
+        "n": 20,
+        "refusal_rate": 0.3,
+        "rouge_l_avg": 0.0709,
+        "keyword_recall": 0.1747,
+        "answer_len_avg": 82.1,
+        "answered_n": 14,
+        "refused_n": 6
+      },
+      "unanswerable": {
+        "n": 29,
+        "refusal_rate": 0.6207,
+        "rouge_l_avg": 0.1135,
+        "keyword_recall": 0.2597,
+        "answer_len_avg": 65.3103,
+        "answered_n": 11,
+        "refused_n": 18
+      },
+      "ALL": {
+        "n": 110,
+        "refusal_rate": 0.3273,
+        "rouge_l_avg": 0.1049,
+        "keyword_recall": 0.2463,
+        "answer_len_avg": 83.5636,
+        "answered_n": 74,
+        "refused_n": 36
+      }
+    }
+  },
+  "ragas": null,
+  "rankings": {
+    "rouge_l": [
+      [
+        "mistral_7b",
+        0.1562
+      ],
+      [
+        "llama3_8b",
+        0.1321
+      ],
+      [
+        "phi3_mini",
+        0.1049
+      ]
+    ],
+    "answerable_refusal": [
+      [
+        "phi3_mini",
+        0.2
+      ],
+      [
+        "mistral_7b",
+        0.2667
+      ],
+      [
+        "llama3_8b",
+        0.7333
+      ]
+    ],
+    "unanswerable_refusal": [
+      [
+        "llama3_8b",
+        1.0
+      ],
+      [
+        "mistral_7b",
+        0.8966
+      ],
+      [
+        "phi3_mini",
+        0.6207
+      ]
+    ]
+  }
+}
