@@ -40,7 +40,7 @@ Build a reproducible pipeline that:
 | 1 | Environment & Data Collection | ✅ Complete | 110 docs · `data/metadata.csv` verified |
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
-| 4 | RAG Pipeline & Generation | ✅ Complete | `src/generation/` · smoke test passes locally |
+| 4 | RAG Pipeline & Generation | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals |
 | 5 | Evaluation & Audit | 🔜 Upcoming | RAGAS scores, hallucination report |
 
 ---
@@ -578,21 +578,44 @@ python scripts/test_rag_generation.py --model mistral   # single model
 python scripts/test_rag_generation.py --model all       # all three
 ```
 
-Expected output per model:
-```
-──────────────────────────────────────────────────────────────────────
-  Model: MISTRAL
-──────────────────────────────────────────────────────────────────────
+---
 
-Question : What are the common symptoms and first-line treatments for Type 2 diabetes?
+### 4.7 Phase 4 Results (Kaggle T4 Run)
 
-Top retrieved chunk:
-  score=0.8xxx | pmc_... | endocrinology
-  Type 2 diabetes is characterized by ...
+Full run: **723 questions × 3 models = 2,169 total rows** saved to `results/`.
 
-Answer:
-  Based on the provided context, the common symptoms of Type 2 diabetes include ...
-```
+| File | Description |
+|------|-------------|
+| `results/phase4_all_results.csv` | Combined 2,169-row CSV (all models) |
+| `results/phase4_llama3_results.json` | Per-question detail — Llama-3 |
+| `results/phase4_mistral_results.json` | Per-question detail — Mistral |
+| `results/phase4_phi3_results.json` | Per-question detail — Phi-3 |
+| `results/log_*.txt` | Per-model generation logs |
+
+**Summary stats:**
+
+| Metric | Value |
+|--------|-------|
+| Questions per model | 723 |
+| Answered (grounded response) | 41.8% (907 / 2,169) |
+| Refused (context insufficient) | 58.2% (1,262 / 2,169) |
+| Avg retrieval score (PubMedBERT) | 0.9073 |
+| Retrieval score range | 0.8721 – 0.9412 |
+
+**GPU memory per model (Kaggle T4):**
+
+| Model | GPU mem at load |
+|-------|----------------|
+| Llama-3-8B | 2.05 GB |
+| Mistral-7B | 2.17 GB |
+| Phi-3-mini | 1.35 GB |
+
+**Key findings:**
+
+- The **anti-hallucination prompt is working** — 58.2% of questions received a correct refusal when the retrieved context did not contain enough information, rather than a fabricated answer.
+- The high refusal rate reflects **corpus coverage**: the corpus is dominated by cardiology, infectious disease, and oncology. Questions about endocrinology or topics only mentioned as comorbidities in retrieved chunks correctly trigger refusals.
+- The **41.8% answered questions** (907 rows) form the evaluation set for Phase 5 RAGAS scoring.
+- All models fit within the T4's 16 GB VRAM with 4-bit NF4 quantization and unloaded cleanly between runs.
 
 ---
 
@@ -669,7 +692,7 @@ python scripts/test_rag_generation.py --model all       # run all three
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-22 · **Phase 4 complete**
+> Last updated: 2026-04-23 · **Phase 4 complete** · 2,169 model answers generated
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
