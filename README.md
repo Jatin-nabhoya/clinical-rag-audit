@@ -136,7 +136,15 @@ clinical-rag-audit/
 │   │   └── __init__.py           ← Public API exports
 │   └── evaluation/               ← RAGAS & manual scoring (Phase 5)
 │
-└── results/                      ← Output tables & charts (Phase 5)
+└── results/                      ← Model outputs & evaluation (Phase 4+ committed)
+    ├── phase4_all_results.csv        ← 2,169 rows — all 3 models combined
+    ├── phase4_llama3_results.json    ← Per-question detail — Llama-3
+    ├── phase4_mistral_results.json   ← Per-question detail — Mistral
+    ├── phase4_phi3_results.json      ← Per-question detail — Phi-3
+    ├── log_llama3.txt                ← Generation log — Llama-3
+    ├── log_mistral.txt               ← Generation log — Mistral
+    ├── log_phi3.txt                  ← Generation log — Phi-3
+    └── phase4_run.log                ← Full Kaggle run log
 ```
 
 ---
