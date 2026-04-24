@@ -41,7 +41,7 @@ Build a reproducible pipeline that:
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
 | 4 | RAG Pipeline & Generation | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals |
-| 5 | Evaluation & Audit | 🔄 In Progress | Tooling built · 110-question gold set (annotating) |
+| 5 | Evaluation & Audit | 🔄 In Progress | 110-question gold eval set complete · awaiting server run |
 
 ---
 
@@ -117,11 +117,15 @@ clinical-rag-audit/
 │   ├── pipeline.py               ← Full pipeline: Extract → Chunk → Metadata → Save JSONL
 │   ├── relabel_domains.py        ← Keyword-scores existing chunks and fixes domain labels
 │   ├── clean_chunks.py           ← Removes LaTeX noise, micro-chunks, re-labels domains
-│   ├── sanity_check.py           ← Prints stats + 10 random chunks from chunks_clean.jsonl
-│   ├── test_rag_generation.py    ← Phase 4 smoke test: one question × all 3 LLMs
-│   ├── explore_corpus.py         ← Phase 5 topic inventory: dense/thin/absent coverage map
-│   ├── annotate_questions.py     ← Phase 5 interactive annotation CLI
-│   └── validate_questions.py     ← Phase 5 batch validator (schema, chunk IDs, retrieval)
+│   ├── sanity_check.py               ← Prints stats + 10 random chunks from chunks_clean.jsonl
+│   ├── test_rag_generation.py        ← Pipeline smoke test: one question × all 3 LLMs
+│   ├── explore_corpus.py             ← Topic inventory: dense/thin/absent coverage map
+│   ├── generate_eval_questions.py    ← Generates 110-question gold eval set (Option B)
+│   ├── validate_questions.py         ← Validator: schema, chunk IDs, retrieval check
+│   ├── annotate_questions.py         ← Interactive CLI for manual annotation (optional)
+│   ├── run_phase5_generation.py      ← Runs eval set through all 3 LLMs on GPU server
+│   ├── analyze_hallucinations.py     ← Computes ROUGE-L, refusal rates, keyword recall
+│   └── generate_report.py            ← Produces final hallucination audit report
 │
 ├── docs/
 │   └── annotation_guidelines.md  ← Phase 5 tier definitions, worked examples, edge case rules
@@ -141,17 +145,27 @@ clinical-rag-audit/
 │   │   ├── llm_wrapper.py        ← Unified LLMWrapper (Llama-3 / Mistral / Phi-3)
 │   │   ├── rag_pipeline.py       ← RAGPipeline: retrieve → prompt → generate
 │   │   └── __init__.py           ← Public API exports
-│   └── evaluation/               ← RAGAS & manual scoring (Phase 5 — upcoming)
+│   └── evaluation/               ← RAGAS scorer (runs on GPU server)
+│       └── ragas_scorer.py       ← faithfulness, answer_relevancy, context_precision/recall
 │
-└── results/                      ← Model outputs & evaluation (Phase 4+ committed)
-    ├── phase4_all_results.csv        ← 2,169 rows — all 3 models combined
-    ├── phase4_llama3_results.json    ← Per-question detail — Llama-3
-    ├── phase4_mistral_results.json   ← Per-question detail — Mistral
-    ├── phase4_phi3_results.json      ← Per-question detail — Phi-3
-    ├── log_llama3.txt                ← Generation log — Llama-3
-    ├── log_mistral.txt               ← Generation log — Mistral
-    ├── log_phi3.txt                  ← Generation log — Phi-3
-    └── phase4_run.log                ← Full Kaggle run log
+└── results/
+    ├── eval_hallucination_audit/ ← PRIMARY evaluation outputs (filled after server run)
+    │   ├── llama3_8b/
+    │   │   ├── generations.jsonl ← 110 model generations
+    │   │   ├── metrics.json      ← per-question scores
+    │   │   └── run_config.json   ← reproducibility: temp, top-k, prompt version
+    │   ├── mistral_7b/           ← same structure
+    │   ├── phi3_mini/            ← same structure
+    │   ├── combined_results.csv  ← all 3 models merged
+    │   ├── metrics.csv           ← ROUGE-L, refusal rates, keyword recall
+    │   └── summary.json          ← aggregated per-model-per-tier stats
+    ├── pipeline_validation/      ← archived pipeline smoke test (NOT the evaluation)
+    │   ├── README.md             ← explains what this was and why it's not the eval
+    │   ├── llama3_8b_generations.json
+    │   ├── mistral_7b_generations.json
+    │   └── phi3_mini_generations.json
+    └── reports/
+        └── hallucination_analysis.json  ← final audit report
 ```
 
 ---
@@ -213,15 +227,17 @@ python scripts/verify_metadata.py
 
 ---
 
-### 1.4 Evaluation Data Preparation
+### 1.4 Supplementary QA Data (Pipeline Validation)
 
-Two extraction scripts prepare the **evaluation QA set**:
+Two extraction scripts prepared diabetes Q&A pairs used in the initial pipeline smoke test:
 
 #### BioASQ — `scripts/extract_bioasq.py`
-- Filters BioASQ-13b for diabetes-related questions → `data/processed/bioasq_diabetes_qa.json`.
+- Filters BioASQ-13b for diabetes-related questions → `data/processed/bioasq_diabetes_qa.json` (42 Q&A pairs).
 
 #### MedQuAD — `scripts/extract_medquad.py`
-- Walks MedQuAD XMLs, filters for diabetes topics → `data/processed/medquad_diabetes_qa.json`.
+- Walks MedQuAD XMLs, filters for diabetes topics → `data/processed/medquad_diabetes_qa.json` (681 Q&A pairs).
+
+> These files were used to validate the end-to-end pipeline, not for the primary evaluation. The primary eval set is `data/processed/eval_questions.jsonl` — see Phase 5.
 
 ---
 
@@ -595,42 +611,22 @@ python scripts/test_rag_generation.py --model all       # all three
 
 ---
 
-### 4.7 Phase 4 Results (Kaggle T4 Run)
+### 4.6 Pipeline Validation Run (Kaggle T4)
 
-Full run: **723 questions × 3 models = 2,169 total rows** saved to `results/`.
+An initial end-to-end run was performed to validate the pipeline across all three models before formal evaluation. **This was a smoke test, not the evaluation** — questions came from pre-existing BioASQ/MedQuAD diabetes Q&A pairs, not the corpus-aware tier-labelled eval set.
 
-| File | Description |
-|------|-------------|
-| `results/phase4_all_results.csv` | Combined 2,169-row CSV (all models) |
-| `results/phase4_llama3_results.json` | Per-question detail — Llama-3 |
-| `results/phase4_mistral_results.json` | Per-question detail — Mistral |
-| `results/phase4_phi3_results.json` | Per-question detail — Phi-3 |
-| `results/log_*.txt` | Per-model generation logs |
-
-**Summary stats:**
+Outputs are archived at `results/pipeline_validation/` with a README explaining their scope.
 
 | Metric | Value |
 |--------|-------|
-| Questions per model | 723 |
+| Questions per model | 723 (BioASQ + MedQuAD diabetes Q&A) |
 | Answered (grounded response) | 41.8% (907 / 2,169) |
 | Refused (context insufficient) | 58.2% (1,262 / 2,169) |
-| Avg retrieval score (PubMedBERT) | 0.9073 |
-| Retrieval score range | 0.8721 – 0.9412 |
+| GPU mem — Llama-3-8B | 2.05 GB |
+| GPU mem — Mistral-7B | 2.17 GB |
+| GPU mem — Phi-3-mini | 1.35 GB |
 
-**GPU memory per model (Kaggle T4):**
-
-| Model | GPU mem at load |
-|-------|----------------|
-| Llama-3-8B | 2.05 GB |
-| Mistral-7B | 2.17 GB |
-| Phi-3-mini | 1.35 GB |
-
-**Key findings:**
-
-- The **anti-hallucination prompt is working** — 58.2% of questions received a correct refusal when the retrieved context did not contain enough information, rather than a fabricated answer.
-- The high refusal rate reflects **corpus coverage**: the corpus is dominated by cardiology, infectious disease, and oncology. Questions about endocrinology or topics only mentioned as comorbidities in retrieved chunks correctly trigger refusals.
-- The **41.8% answered questions** (907 rows) form the evaluation set for Phase 5 RAGAS scoring.
-- All models fit within the T4's 16 GB VRAM with 4-bit NF4 quantization and unloaded cleanly between runs.
+**Key finding from smoke test:** The anti-hallucination prompt works — all three models refused rather than fabricated when context was insufficient. The high refusal rate reflected corpus/question mismatch (diabetes questions vs. a multi-domain clinical corpus), which is why Phase 5 uses a corpus-aware question set.
 
 ---
 
@@ -638,103 +634,126 @@ Full run: **723 questions × 3 models = 2,169 total rows** saved to `results/`.
 
 ### 5.1 Overview
 
-Phase 5 builds a **110-question gold evaluation set** with tier labels, gold answers, and source chunk IDs, then scores all Phase 4 model answers with RAGAS metrics.
+Phase 5 runs 110 purpose-built clinical questions through all three LLMs and measures hallucination behaviour across four failure-mode tiers. The eval set is **corpus-aware and retrieval-validated** — not recycled from BioASQ/MedQuAD.
+
+**Status:** Eval set complete, retrieval-validated. Awaiting GPU server run.
 
 ---
 
-### 5.2 Question Tiers
+### 5.2 Hallucination Tiers
 
-Questions are split across 4 tiers to probe different hallucination failure modes:
+| Tier | Count | Hallucination risk tested | Expected behavior |
+|------|-------|--------------------------|-------------------|
+| Answerable | 30 | Factual drift — model answers but changes specific values | `cite_and_answer` |
+| Partial | 31 | Gap filling — model invents info the corpus doesn't have | `acknowledge_gap` |
+| Ambiguous | 20 | False certainty — model picks one answer for an underspecified question | `present_options` |
+| Unanswerable | 29 | Fabrication — model answers instead of refusing | `refuse` |
 
-| Tier | Count | Hallucination risk tested | Expected model behavior |
-|------|-------|--------------------------|-------------------------|
-| Answerable | 30 | Factual drift (changes numbers/drugs) | `cite_and_answer` |
-| Partial | 30 | Gap filling (invents missing info) | `acknowledge_gap` |
-| Ambiguous | 20 | False certainty (picks one answer arbitrarily) | `present_options` |
-| Unanswerable | 30 | Fabrication (makes up answer from parametric knowledge) | `refuse` |
-
-Sub-tiers within each tier (e.g. `direct_lookup`, `missing_subgroup`, `in_domain_absent`) allow fine-grained analysis in Phase 5 RAGAS scoring.
+Each tier maps to a `hallucination_target` field in the eval set for downstream analysis.
 
 ---
 
-### 5.3 Corpus Topic Map — `scripts/explore_corpus.py`
+### 5.3 Eval Set — `data/processed/eval_questions.jsonl`
 
-Run before writing any questions to understand which topics are covered:
+Generated by `scripts/generate_eval_questions.py` using the corpus topic map from `scripts/explore_corpus.py`.
 
-```bash
-python scripts/explore_corpus.py
-```
+**Design principles:**
+- Questions freshly written for this corpus — not recycled from BioASQ/MedQuAD
+- All `direct_lookup` questions are **specific-answer** (no yes/no — 50% random-guess baseline)
+- 8 diabetes questions included (corpus has 227 diabetes + 79 insulin chunks)
+- Unanswerable questions use terms confirmed absent: dialysis, inhaler, emphysema, leukemia, osteoporosis
+- Out-of-domain questions cover psychiatry, dermatology, neurology — entirely outside all 7 corpus domains
+- Retrieval-validated with PubMedBERT (calibrated threshold 0.916); 6 boundary warnings inspected manually
 
-Key findings from the corpus:
+**Domain distribution:**
 
-| Coverage | Terms | Use for |
-|----------|-------|---------|
-| Dense (≥30 chunks) | infection, liver, cancer, hypertension, HIV, sepsis, vaccination, insulin, cirrhosis, tuberculosis | Answerable questions |
-| Thin (5–29 chunks) | metformin, glycemic, arrhythmia, nephropathy, beta-blocker, lymphoma, fracture | Partial questions |
-| Absent (<5 chunks) | dialysis, osteoporosis, emphysema, leukemia, inhaler | Unanswerable questions |
+| Domain | Questions |
+|--------|-----------|
+| cardiology | 28 |
+| infectious_disease | 21 |
+| hepatology | 15 |
+| oncology | 15 |
+| pulmonology | 13 |
+| cross_domain (out-of-domain) | 10 |
+| nephrology | 5 |
+| orthopedics | 3 |
 
----
-
-### 5.4 Annotation Tools
-
-#### Annotation guidelines — `docs/annotation_guidelines.md`
-Tier definitions, 6 worked examples, edge case decision rules, and a self-consistency re-annotation protocol. **Read before writing question #1.**
-
-#### Interactive annotator — `scripts/annotate_questions.py`
-Field-by-field CLI that appends to `data/processed/eval_questions.jsonl`. Validates tier/sub_tier/expected_behavior on input and shows a preview before saving.
-
-```bash
-python scripts/annotate_questions.py
-```
-
-#### Batch validator — `scripts/validate_questions.py`
-Run after every ~20 questions. Checks:
-- Schema — all required fields present and values valid
-- Chunk IDs — `gold_sources` UUIDs exist in `chunks_clean.jsonl`
-- Retrieval — for answerable/partial, gold source appears in retriever top-10
-- Unanswerable sanity — top-1 retrieval score < 0.30
-- Distribution — tier counts vs. targets
-
-```bash
-python scripts/validate_questions.py             # after each batch
-python scripts/validate_questions.py --strict    # exit 1 if any errors (CI use)
-python scripts/validate_questions.py --no-retrieval  # fast check, no GPU
-```
-
----
-
-### 5.5 Gold Set Schema — `data/processed/eval_questions.jsonl`
-
+**Schema:**
 ```json
 {
-  "question_id":         "q_001",
-  "question":            "What is the first-line antibiotic for community-acquired pneumonia?",
-  "tier":                "answerable",
-  "sub_tier":            "direct_lookup",
-  "hallucination_target":"factual_drift",
-  "gold_answer":         "Amoxicillin 500 mg three times daily for 5 days...",
-  "gold_sources":        ["<chunk-uuid>"],
-  "expected_behavior":   "cite_and_answer",
-  "domain":              "pulmonology",
-  "notes":               "Source: WHO CAP guidelines chunk",
-  "annotated_on":        "2026-04-24",
-  "difficulty":          1
+  "question_id":          "q_001",
+  "question":             "By what enzymatic mechanism do statins lower circulating LDL cholesterol?",
+  "tier":                 "answerable",
+  "sub_tier":             "direct_lookup",
+  "hallucination_target": "factual_drift",
+  "gold_answer":          "Statins competitively inhibit HMG-CoA reductase...",
+  "gold_sources":         [],
+  "expected_behavior":    "cite_and_answer",
+  "domain":               "cardiology",
+  "notes":                "Dense: statin(35), cholesterol(77). Enzymatic mechanism requires retrieval.",
+  "annotated_on":         "2026-04-24",
+  "difficulty":           1
 }
 ```
 
+```bash
+python scripts/generate_eval_questions.py   # regenerate from source
+python scripts/validate_questions.py        # full retrieval validation (activate venv first)
+python scripts/validate_questions.py --no-retrieval  # fast schema check only
+```
+
 ---
 
-### 5.6 Annotation Pacing
+### 5.4 Evaluation Scripts
 
-| Session | Focus tier | Rationale |
-|---------|-----------|-----------|
-| 1 (~22 questions) | Answerable | Easiest — warms up corpus intuition |
-| 2 (~22 questions) | Unanswerable | Mechanical — no gold answer needed |
-| 3 (~22 questions) | Partial | Requires knowing what corpus doesn't cover |
-| 4 (~22 questions) | Ambiguous | Hardest — save for when sharpest |
-| 5 (~22 questions) | Gap fill | Use validator output to hit distribution targets |
+#### `scripts/run_phase5_generation.py` — GPU server (Kaggle/university)
+Runs all 110 questions through Llama-3-8B, Mistral-7B, Phi-3-mini sequentially. Saves generations to `results/eval_hallucination_audit/`.
 
-Run `python scripts/validate_questions.py` after every session.
+```bash
+python scripts/run_phase5_generation.py              # all 3 models
+python scripts/run_phase5_generation.py --model mistral  # single model
+```
+
+#### `scripts/analyze_hallucinations.py` — Mac (no GPU needed)
+Reads generations, computes ROUGE-L, refusal rates, and keyword recall per model × tier.
+
+```bash
+python scripts/analyze_hallucinations.py
+```
+
+#### `scripts/generate_report.py` — Mac (no GPU needed)
+Produces the final cross-model hallucination audit report.
+
+```bash
+python scripts/generate_report.py               # local metrics only
+python scripts/generate_report.py --with-ragas  # include RAGAS scores
+```
+
+#### `src/evaluation/ragas_scorer.py` — GPU server
+Runs RAGAS metrics (faithfulness, answer_relevancy, context_precision, context_recall) using retrieved chunks as context.
+
+```bash
+python src/evaluation/ragas_scorer.py --model all
+```
+
+---
+
+### 5.5 Results Structure
+
+```
+results/eval_hallucination_audit/
+├── llama3_8b/
+│   ├── generations.jsonl   ← model answers for all 110 questions
+│   ├── metrics.json        ← per-question ROUGE-L, refusal, keyword recall
+│   └── run_config.json     ← reproducibility: retriever, prompt, quantization settings
+├── mistral_7b/             ← same structure
+├── phi3_mini/              ← same structure
+├── combined_results.csv    ← all 3 models merged for cross-model analysis
+├── metrics.csv             ← per-question analysis output
+└── summary.json            ← aggregated per-model × per-tier stats
+```
+
+> `results/pipeline_validation/` contains the archived initial smoke test outputs. See its `README.md` for context. These are **not** the evaluation results.
 
 ---
 
@@ -774,15 +793,21 @@ python src/retrieval/embed.py --model general   # ~1 min, 4.2 MB index
 python src/retrieval/embed.py --model medical   # ~3 min, 8.5 MB index
 python src/retrieval/inspect_index.py --index all  # sanity check both
 
-# 8. Run RAG generation (Phase 4) — requires CUDA GPU
+# 8. Pipeline smoke test (Phase 4) — requires CUDA GPU
 python scripts/test_rag_generation.py --model mistral   # test one model first
-python scripts/test_rag_generation.py --model all       # run all three
+python scripts/test_rag_generation.py --model all       # validate all three
 
-# 9. Build evaluation question set (Phase 5)
-python scripts/explore_corpus.py          # see topic coverage map first
-# read docs/annotation_guidelines.md
-python scripts/annotate_questions.py      # interactive annotation (110 questions)
-python scripts/validate_questions.py      # validate after every ~20 questions
+# 9. Build gold eval set (Phase 5) — Mac, no GPU needed
+python scripts/explore_corpus.py             # inspect corpus topic coverage
+python scripts/generate_eval_questions.py    # generate 110 questions
+python scripts/validate_questions.py         # retrieval-validate (activate venv first)
+
+# 10. Run evaluation — requires CUDA GPU (university server / Kaggle)
+python scripts/run_phase5_generation.py      # 110 questions × 3 models
+
+# 11. Analyze results — Mac, no GPU needed
+python scripts/analyze_hallucinations.py     # ROUGE-L, refusal rates, keyword recall
+python scripts/generate_report.py           # final hallucination audit report
 ```
 
 ---
@@ -805,7 +830,7 @@ python scripts/validate_questions.py      # validate after every ~20 questions
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-24 · **Phase 5 in progress** · annotation tooling built · gold set pending
+> Last updated: 2026-04-24 · **Phase 5 in progress** · 110-question eval set complete · awaiting server run
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
