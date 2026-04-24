@@ -16,9 +16,7 @@ data/vector_store/
 *.safetensors
 .cache/
 
-# Results
-results/*.csv
-results/*.json
+# Results — Phase 4+ outputs are committed
 !results/.gitkeep
 
 # Secrets
