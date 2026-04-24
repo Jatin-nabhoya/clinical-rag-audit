@@ -14,11 +14,12 @@
 4. [Phase 2 — Preprocessing & Chunking](#phase-2--preprocessing--chunking) ✅
 5. [Phase 3 — Embedding & Vector Store](#phase-3--embedding--vector-store) ✅
 6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) ✅
-7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) 🔄
-8. [Project Structure](#project-structure)
-9. [Quick Start](#quick-start)
-10. [Data Sources & Licenses](#data-sources--licenses)
-11. [Corpus Snapshot](#corpus-snapshot)
+7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) ✅
+8. [Phase 6 — Hallucination Scoring](#phase-6--hallucination-scoring) 🔄
+9. [Project Structure](#project-structure)
+10. [Quick Start](#quick-start)
+11. [Data Sources & Licenses](#data-sources--licenses)
+12. [Corpus Snapshot](#corpus-snapshot)
 
 ---
 
@@ -41,7 +42,8 @@ Build a reproducible pipeline that:
 | 2 | Preprocessing & Chunking | ✅ Complete | 2 753 clean chunks · `data/processed/chunks_clean.jsonl` |
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
 | 4 | RAG Pipeline & Generation | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals |
-| 5 | Evaluation & Audit | 🔄 In Progress | 110-question gold eval set complete · awaiting server run |
+| 5 | Evaluation & Audit | ✅ Complete | 330 generations · 3 models × 110 questions · results in `eval_hallucination_audit/` |
+| 6 | Hallucination Scoring | 🔄 In Progress | Taxonomy labeling · ROUGE-L · comparison tables & charts |
 
 ---
 
@@ -125,7 +127,9 @@ clinical-rag-audit/
 │   ├── annotate_questions.py         ← Interactive CLI for manual annotation (optional)
 │   ├── run_phase5_generation.py      ← Runs eval set through all 3 LLMs on GPU server
 │   ├── analyze_hallucinations.py     ← Computes ROUGE-L, refusal rates, keyword recall
-│   └── generate_report.py            ← Produces final hallucination audit report
+│   ├── generate_report.py            ← Produces final hallucination audit report
+│   ├── score_hallucinations.py       ← Phase 6 taxonomy labeling + bootstrap CIs
+│   └── visualize_results.py          ← Phase 6 comparison charts (4 figures)
 │
 ├── docs/
 │   └── annotation_guidelines.md  ← Phase 5 tier definitions, worked examples, edge case rules
@@ -630,13 +634,13 @@ Outputs are archived at `results/pipeline_validation/` with a README explaining 
 
 ---
 
-## Phase 5 — Evaluation & Audit 🔄
+## Phase 5 — Evaluation & Audit ✅
 
 ### 5.1 Overview
 
 Phase 5 runs 110 purpose-built clinical questions through all three LLMs and measures hallucination behaviour across four failure-mode tiers. The eval set is **corpus-aware and retrieval-validated** — not recycled from BioASQ/MedQuAD.
 
-**Status:** Eval set complete, retrieval-validated. Awaiting GPU server run.
+**Status:** Complete. 330 generations collected (110 questions × 3 models). Results in `results/eval_hallucination_audit/`.
 
 ---
 
@@ -738,22 +742,107 @@ python src/evaluation/ragas_scorer.py --model all
 
 ---
 
-### 5.5 Results Structure
+### 5.5 Generation Results (Server Run Complete)
+
+**Refusal rate by model × tier — comprehensive detection:**
+
+| Model | Answerable (n=30) | Partial (n=31) | Ambiguous (n=20) | Unanswerable (n=29) | Overall |
+|-------|------------------|----------------|-----------------|---------------------|---------|
+| Llama-3-8B | 22/30 refused | 25/31 refused | 13/20 refused | 29/29 refused | 89/110 (80.9%) |
+| Mistral-7B | 8/30 refused | 18/31 refused | 11/20 refused | 27/29 refused | 64/110 (58.2%) |
+| Phi-3-mini | 15/30 refused | 17/31 refused | 13/20 refused | 27/29 refused | 72/110 (65.5%) |
+
+**Key findings from generation run:**
+- **Mistral-7B** is the most calibrated — correct refusal rate 27/29 on unanswerable, answers 22/30 answerable
+- **Llama-3-8B** is over-cautious — refuses 22/30 answerable questions (utility failure)
+- **Phi-3-mini** matches Mistral on unanswerable refusals (27/29) but refuses more answerable questions
+- **Confirmed fabrications:** Phi-3 answered Alzheimer's staging with "MMSE" (parametric knowledge, not in context); Mistral cited Terazosin from an unrelated chunk for Parkinson's disease
 
 ```
 results/eval_hallucination_audit/
-├── llama3_8b/
-│   ├── generations.jsonl   ← model answers for all 110 questions
-│   ├── metrics.json        ← per-question ROUGE-L, refusal, keyword recall
-│   └── run_config.json     ← reproducibility: retriever, prompt, quantization settings
-├── mistral_7b/             ← same structure
-├── phi3_mini/              ← same structure
-├── combined_results.csv    ← all 3 models merged for cross-model analysis
-├── metrics.csv             ← per-question analysis output
-└── summary.json            ← aggregated per-model × per-tier stats
+├── llama3_8b/generations.jsonl   ← 110 model answers
+├── mistral_7b/generations.jsonl
+├── phi3_mini/generations.jsonl
+├── combined_results.csv          ← all 3 models merged
+├── metrics.csv                   ← per-question ROUGE-L, refusal, keyword recall
+└── summary.json                  ← aggregated per-model × per-tier stats
 ```
 
-> `results/pipeline_validation/` contains the archived initial smoke test outputs. See its `README.md` for context. These are **not** the evaluation results.
+> `results/pipeline_validation/` contains archived initial smoke test outputs — not the evaluation results.
+
+---
+
+## Phase 6 — Hallucination Scoring 🔄
+
+### 6.1 Overview
+
+Phase 6 takes the raw generations and produces quantitative hallucination scores using a rule-based taxonomy (no external API required), ROUGE-L quality metrics with bootstrap confidence intervals, and comparison charts.
+
+**Status:** In progress.
+
+---
+
+### 6.2 Hallucination Taxonomy
+
+Each (question, answer) pair is labelled with one of seven categories:
+
+| Label | Trigger | Hallucination type |
+|-------|---------|-------------------|
+| `correct_refusal` | Refused on unanswerable | ✓ Correct |
+| `grounded` | Answered answerable, ROUGE-L ≥ 0.12 | ✓ Correct |
+| `over_refusal` | Refused on answerable / partial / ambiguous | ✗ Utility failure |
+| `fabrication` | Answered an unanswerable question | ✗ Worst failure |
+| `factual_drift` | Answered answerable, ROUGE-L < 0.12 | ✗ Quality failure |
+| `gap_filling` | Answered partial without acknowledging the gap | ✗ Omission failure |
+| `false_certainty` | Gave definitive answer to underspecified question | ✗ Overconfidence |
+
+---
+
+### 6.3 Scoring Scripts
+
+#### `scripts/score_hallucinations.py` — Mac, no GPU
+Rule-based taxonomy labeling + ROUGE-L + bootstrap 95% CIs. Produces `taxonomy.csv` and `scoring_summary.json`.
+
+```bash
+python scripts/score_hallucinations.py
+```
+
+#### `scripts/visualize_results.py` — Mac, no GPU
+Generates all publication-quality charts:
+- Stacked bar: taxonomy distribution per model
+- Heatmap: refusal rate per model × tier
+- Bar with CIs: ROUGE-L per model on answerable questions
+- Scatter: refusal calibration (answerable vs unanswerable) per model
+
+```bash
+python scripts/visualize_results.py
+```
+
+#### `src/evaluation/ragas_scorer.py` — requires LLM judge API
+Optional RAGAS metrics (faithfulness, answer_relevancy, context_precision, context_recall). Requires an LLM judge API key (e.g. `OPENAI_API_KEY` or Groq free tier).
+
+```bash
+python src/evaluation/ragas_scorer.py --model all
+```
+
+---
+
+### 6.4 Results Structure (after scoring)
+
+```
+results/eval_hallucination_audit/
+├── taxonomy.csv              ← per-question label for all 330 rows
+├── scoring_summary.json      ← per-model × per-tier aggregated stats + bootstrap CIs
+└── ragas_scores.csv          ← optional: faithfulness, answer_relevancy, etc.
+
+results/reports/
+├── hallucination_analysis.json
+└── figures/
+    ├── taxonomy_distribution.png   ← stacked bar chart
+    ├── refusal_heatmap.png         ← tier × model refusal heatmap
+    ├── rouge_l_comparison.png      ← ROUGE-L with 95% CIs
+    └── calibration_scatter.png     ← answerable vs unanswerable refusal scatter
+```
 
 ---
 
@@ -808,6 +897,12 @@ python scripts/run_phase5_generation.py      # 110 questions × 3 models
 # 11. Analyze results — Mac, no GPU needed
 python scripts/analyze_hallucinations.py     # ROUGE-L, refusal rates, keyword recall
 python scripts/generate_report.py           # final hallucination audit report
+
+# 12. Hallucination scoring (Phase 6) — Mac, no GPU needed
+python scripts/score_hallucinations.py      # taxonomy labels + bootstrap CIs
+python scripts/visualize_results.py         # all comparison charts
+# Optional — requires LLM judge API key:
+python src/evaluation/ragas_scorer.py --model all
 ```
 
 ---
@@ -830,7 +925,7 @@ python scripts/generate_report.py           # final hallucination audit report
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-24 · **Phase 5 in progress** · 110-question eval set complete · awaiting server run
+> Last updated: 2026-04-24 · **Phase 5 complete · Phase 6 in progress** · 330 generations collected · hallucination scoring underway
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
