@@ -49,16 +49,18 @@ TARGET_COUNTS = {
     ("answerable",   "direct_lookup"):          10,
     ("answerable",   "single_chunk_reasoning"): 15,
     ("answerable",   "multi_chunk_synthesis"):   5,
-    ("partial",      "missing_specificity"):    15,
+    ("partial",      "missing_specificity"):    16,  # q_094 moved from unanswerable → partial
     ("partial",      "missing_subgroup"):       10,
     ("partial",      "missing_recent_update"):   5,
     ("ambiguous",    "underspecified"):         15,
     ("ambiguous",    "conflicting_sources"):     5,
     ("unanswerable", "out_of_domain"):          10,
-    ("unanswerable", "in_domain_absent"):       20,
+    ("unanswerable", "in_domain_absent"):       19,  # q_094 moved out to partial
 }
 
-UNANSWERABLE_SCORE_THRESHOLD = 0.30
+# PubMedBERT scores cluster 0.87–0.94 for all medical queries.
+# Empirical midpoint between answerable avg (0.924) and unanswerable avg (0.909).
+UNANSWERABLE_SCORE_THRESHOLD = 0.916
 RETRIEVAL_TOP_K = 10
 
 

@@ -7,6 +7,7 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/processed/eval_questions.jsonl
 
 # Vector store (binary FAISS indexes — too large for git)
 data/vector_store/
