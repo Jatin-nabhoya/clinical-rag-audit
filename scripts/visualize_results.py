@@ -231,6 +231,283 @@ def fig_calibration(summary: dict):
     print(f"  Saved → {out}")
 
 
+# ── Figure 5: Per-tier taxonomy small-multiples ───────────────────────────────
+def fig_per_tier_taxonomy():
+    """3 × 4 grid: rows=models, cols=tiers, each cell a stacked bar."""
+    import csv
+
+    taxonomy_path = EVAL_DIR / "taxonomy.csv"
+    if not taxonomy_path.exists():
+        print(f"  [SKIP] taxonomy.csv not found — run score_hallucinations.py first")
+        return
+
+    with open(taxonomy_path) as f:
+        rows = list(csv.DictReader(f))
+
+    fig, axes = plt.subplots(3, 4, figsize=(16, 9), sharey=True)
+    fig.suptitle("Hallucination Taxonomy by Model × Question Tier\n"
+                 "(reveals where each failure mode concentrates)", fontsize=13, y=1.01)
+
+    for r_idx, model in enumerate(MODELS):
+        for c_idx, tier in enumerate(TIERS):
+            ax     = axes[r_idx][c_idx]
+            subset = [row for row in rows if row["model"] == model and row["tier"] == tier]
+            n      = len(subset)
+            if n == 0:
+                ax.text(0.5, 0.5, "no data", ha="center", va="center", transform=ax.transAxes)
+                continue
+
+            counts = {lbl: sum(1 for row in subset if row["label"] == lbl) for lbl in LABEL_ORDER}
+            bottom = 0
+            for lbl in LABEL_ORDER:
+                pct = counts[lbl] / n
+                if pct > 0:
+                    ax.bar(0, pct, bottom=bottom, color=PALETTE[lbl], width=0.6,
+                           edgecolor="white", linewidth=0.5)
+                    if pct > 0.08:
+                        ax.text(0, bottom + pct / 2, f"{pct:.0%}",
+                                ha="center", va="center", fontsize=8, color="white", fontweight="bold")
+                    bottom += pct
+
+            ax.set_xlim(-0.5, 0.5)
+            ax.set_ylim(0, 1.05)
+            ax.set_xticks([])
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
+            ax.tick_params(labelsize=8)
+
+            if r_idx == 0:
+                ax.set_title(TIER_LABELS[tier], fontsize=11, fontweight="bold")
+            if c_idx == 0:
+                ax.set_ylabel(MODEL_LABELS[model], fontsize=10, fontweight="bold")
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.text(0.5, -0.08, f"n={n}", ha="center", transform=ax.transAxes,
+                    fontsize=8, color="grey")
+
+    # Legend
+    patches = [mpatches.Patch(color=PALETTE[l], label=LABEL_DISPLAY[l]) for l in LABEL_ORDER]
+    fig.legend(handles=patches, loc="lower center", ncol=4, fontsize=9,
+               bbox_to_anchor=(0.5, -0.04), framealpha=0.9)
+
+    plt.tight_layout()
+    out = FIGURES / "per_tier_taxonomy.png"
+    plt.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved → {out}")
+
+
+# ── Figure 6: Retrieval quality vs answer quality scatter ─────────────────────
+def fig_retrieval_vs_generation():
+    """
+    X-axis: context_overlap (retrieval quality proxy)
+    Y-axis: rouge_l (answer quality proxy)
+    Color: model   Marker shape: tier
+    Reveals: generator problems vs retriever problems per model.
+    """
+    import csv
+
+    taxonomy_path = EVAL_DIR / "taxonomy.csv"
+    if not taxonomy_path.exists():
+        print(f"  [SKIP] taxonomy.csv not found")
+        return
+
+    with open(taxonomy_path) as f:
+        rows = list(csv.DictReader(f))
+
+    # Only non-refusals with positive metrics
+    answered = [r for r in rows
+                if r["refused"] == "False"
+                and float(r["rouge_l"]) > 0
+                and float(r["context_overlap"]) > 0]
+
+    if len(answered) < 5:
+        print(f"  [SKIP] Too few answered rows for scatter ({len(answered)})")
+        return
+
+    fig, ax = plt.subplots(figsize=(9, 7))
+    colors  = {"llama3_8b": "#0072B2", "mistral_7b": "#009E73", "phi3_mini": "#D55E00"}
+    markers = {"answerable": "o", "partial": "s", "ambiguous": "^", "unanswerable": "D"}
+
+    for model in MODELS:
+        mrows = [r for r in answered if r["model"] == model]
+        for tier in TIERS:
+            trows = [r for r in mrows if r["tier"] == tier]
+            if not trows:
+                continue
+            x = [float(r["context_overlap"]) for r in trows]
+            y = [float(r["rouge_l"])          for r in trows]
+            ax.scatter(x, y, c=colors[model], marker=markers[tier],
+                       s=60, alpha=0.65, edgecolors="white", linewidths=0.5,
+                       label=f"{MODEL_LABELS[model]} / {TIER_LABELS[tier]}" if tier == "answerable" else "")
+
+    # Quadrant annotations
+    ax.axvline(0.35, color="grey", linestyle="--", alpha=0.4, linewidth=1)
+    ax.axhline(0.12, color="grey", linestyle="--", alpha=0.4, linewidth=1)
+    quad_kw = dict(fontsize=8, color="grey", ha="center",
+                   bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.7))
+    ax.text(0.17, 0.22, "Low retrieval\nhigh answer\n(parametric)", **quad_kw)
+    ax.text(0.60, 0.22, "Good retrieval\ngood answer\n(grounded)", **quad_kw)
+    ax.text(0.17, 0.05, "Both failed\n(refusal / drift)", **quad_kw)
+    ax.text(0.60, 0.05, "Good retrieval\npoor answer\n(generator drift)", **quad_kw)
+
+    # Model legend
+    model_handles = [mpatches.Patch(color=colors[m], label=MODEL_LABELS[m]) for m in MODELS]
+    tier_handles  = [plt.Line2D([0],[0], marker=markers[t], color="grey",
+                                linestyle="none", markersize=7, label=TIER_LABELS[t])
+                     for t in TIERS]
+    leg1 = ax.legend(handles=model_handles, loc="upper left", fontsize=9, title="Model")
+    ax.add_artist(leg1)
+    ax.legend(handles=tier_handles, loc="upper right", fontsize=9, title="Tier")
+
+    ax.set_xlabel("Context overlap  (fraction of answer words in retrieved context)\n"
+                  "← retriever/generator alignment →", fontsize=10)
+    ax.set_ylabel("ROUGE-L vs gold answer\n← answer quality →", fontsize=10)
+    ax.set_title("Retrieval Quality vs Answer Quality\n"
+                 "Diagnoses whether failures are retriever-driven or generator-driven",
+                 fontsize=11)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    plt.tight_layout()
+    out = FIGURES / "retrieval_vs_generation.png"
+    plt.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved → {out}")
+
+
+# ── Figure 7: Answer length violin by tier and model ─────────────────────────
+def fig_answer_length():
+    """Violin plot: answer token count by tier × model."""
+    import json
+
+    data = {model: {tier: [] for tier in TIERS} for model in MODELS}
+
+    for model in MODELS:
+        path = EVAL_DIR / model / "generations.jsonl"
+        if not path.exists():
+            continue
+        with open(path) as f:
+            for line in f:
+                r    = json.loads(line)
+                tier = r["tier"]
+                wc   = len(r["answer"].split())
+                data[model][tier].append(wc)
+
+    fig, axes = plt.subplots(1, 4, figsize=(14, 5), sharey=True)
+    colors = ["#0072B2", "#009E73", "#D55E00"]
+
+    for c_idx, tier in enumerate(TIERS):
+        ax      = axes[c_idx]
+        parts   = ax.violinplot(
+            [data[model][tier] for model in MODELS],
+            positions=range(len(MODELS)),
+            showmedians=True, showextrema=False,
+        )
+        for i, (pc, color) in enumerate(zip(parts["bodies"], colors)):
+            pc.set_facecolor(color)
+            pc.set_alpha(0.65)
+        parts["cmedians"].set_color("black")
+        parts["cmedians"].set_linewidth(2)
+
+        ax.set_xticks(range(len(MODELS)))
+        ax.set_xticklabels([MODEL_LABELS[m].replace("-", "\n") for m in MODELS], fontsize=9)
+        ax.set_title(TIER_LABELS[tier], fontsize=11, fontweight="bold")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        if c_idx == 0:
+            ax.set_ylabel("Answer length (words)", fontsize=10)
+
+    fig.suptitle("Answer Length Distribution by Model × Tier\n"
+                 "(short = refusal; long + uniform = verbose hedging; wide spread = variable quality)",
+                 fontsize=11, y=1.02)
+
+    # Add legend for models
+    patches = [mpatches.Patch(color=c, label=MODEL_LABELS[m]) for m, c in zip(MODELS, colors)]
+    fig.legend(handles=patches, loc="lower center", ncol=3, fontsize=9,
+               bbox_to_anchor=(0.5, -0.04))
+
+    plt.tight_layout()
+    out = FIGURES / "answer_length_violin.png"
+    plt.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved → {out}")
+
+
+# ── Figure 8: Behavior matrix (expected vs actual per model) ──────────────────
+def fig_behavior_matrix():
+    """
+    4-row × 3-col subplot: one confusion-style matrix per model.
+    Rows = question tier (expected behaviour), cols = actual outcome category.
+    """
+    import csv
+
+    taxonomy_path = EVAL_DIR / "taxonomy.csv"
+    if not taxonomy_path.exists():
+        return
+
+    with open(taxonomy_path) as f:
+        rows = list(csv.DictReader(f))
+
+    # Map label → outcome bucket
+    OUTCOME = {
+        "correct_refusal": "correct",
+        "grounded":        "correct",
+        "over_refusal":    "over-refused",
+        "fabrication":     "hallucinated",
+        "gap_filling":     "hallucinated",
+        "factual_drift":   "hallucinated",
+        "false_certainty": "hallucinated",
+    }
+    OUTCOMES = ["correct", "over-refused", "hallucinated"]
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 5))
+    fig.suptitle("Expected Behaviour vs Actual Outcome per Model\n"
+                 "(rows = question tier · columns = what the model actually did)",
+                 fontsize=12, y=1.02)
+
+    for ax, model in zip(axes, MODELS):
+        mat = np.zeros((len(TIERS), len(OUTCOMES)))
+        for row in rows:
+            if row["model"] != model:
+                continue
+            tier_idx    = TIERS.index(row["tier"])
+            outcome_idx = OUTCOMES.index(OUTCOME.get(row["label"], "hallucinated"))
+            mat[tier_idx, outcome_idx] += 1
+
+        # Normalise to % per row
+        row_sums = mat.sum(axis=1, keepdims=True)
+        pct = np.where(row_sums > 0, mat / row_sums, 0)
+
+        im = ax.imshow(pct, cmap="RdYlGn", vmin=0, vmax=1, aspect="auto")
+
+        for i in range(len(TIERS)):
+            for j in range(len(OUTCOMES)):
+                n   = int(mat[i, j])
+                p   = pct[i, j]
+                clr = "white" if p > 0.55 else "black"
+                ax.text(j, i, f"{n}\n({p:.0%})", ha="center", va="center",
+                        fontsize=9, color=clr, fontweight="bold")
+
+        ax.set_xticks(range(len(OUTCOMES)))
+        ax.set_xticklabels(OUTCOMES, fontsize=10)
+        ax.set_yticks(range(len(TIERS)))
+        ax.set_yticklabels([TIER_LABELS[t] for t in TIERS], fontsize=10)
+        ax.set_title(MODEL_LABELS[model], fontsize=12, fontweight="bold")
+
+        # Cell borders
+        for j in range(len(OUTCOMES)):
+            for i in range(len(TIERS)):
+                ax.add_patch(plt.Rectangle((j-0.5, i-0.5), 1, 1,
+                             fill=False, edgecolor="black", linewidth=0.5))
+
+    plt.colorbar(im, ax=axes[-1], shrink=0.8, label="% of tier questions")
+    plt.tight_layout()
+    out = FIGURES / "behavior_matrix.png"
+    plt.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved → {out}")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     print("=" * 70)
@@ -241,17 +518,30 @@ def main():
     print(f"\n  Loaded scoring_summary.json for {list(summary.keys())}")
     print(f"  Saving figures to {FIGURES}\n")
 
+    # Original 4 charts
     fig_taxonomy(summary)
     fig_heatmap(summary)
     fig_rouge_l(summary)
     fig_calibration(summary)
 
+    # New 4 charts
+    fig_per_tier_taxonomy()
+    fig_retrieval_vs_generation()
+    fig_answer_length()
+    fig_behavior_matrix()
+
     print(f"\n{'═'*70}")
-    print("  All 4 figures saved:")
-    print("    taxonomy_distribution.png — hallucination label breakdown")
+    print("  All 8 figures saved:")
+    print("    [Original]")
+    print("    taxonomy_distribution.png — overall label breakdown per model")
     print("    refusal_heatmap.png       — refusal rate per model × tier")
-    print("    rouge_l_comparison.png    — answer quality with 95% CIs")
+    print("    rouge_l_comparison.png    — ROUGE-L with 95% bootstrap CIs")
     print("    calibration_scatter.png   — answerable vs unanswerable refusal")
+    print("    [New]")
+    print("    per_tier_taxonomy.png     — 3×4 small-multiples: where failures concentrate")
+    print("    retrieval_vs_generation.png — retriever vs generator failure diagnosis")
+    print("    answer_length_violin.png  — behavioral fingerprint by length")
+    print("    behavior_matrix.png       — expected vs actual outcome per model")
     print(f"{'═'*70}")
 
 
