@@ -1,0 +1,4 @@
+model,median,mean,p25,p75,min,max,note
+Llama-3-8B,47,48.2,37,58,12,114,"Short, consistent (mostly refusals)"
+Mistral-7B,53,59.3,36,74,11,173,"Short, consistent (mostly refusals)"
+Phi-3-mini,71,83.6,50,110,21,337,"Long, variable (answers + hedging)"

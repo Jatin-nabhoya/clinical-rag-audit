@@ -1,0 +1,5 @@
+tier,Llama-3-8B,Llama-3-8B_n,Mistral-7B,Mistral-7B_n,Phi-3-mini,Phi-3-mini_n
+answerable,23.3,30,53.3,30,23.3,30
+partial,0,31,25.8,31,3.2,31
+ambiguous,35.0,20,35.0,20,20.0,20
+unanswerable,100.0,29,93.1,29,96.6,29
