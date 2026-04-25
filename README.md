@@ -16,6 +16,7 @@
 6. [Phase 4 — RAG Pipeline & Generation](#phase-4--rag-pipeline--generation) ✅
 7. [Phase 5 — Evaluation & Audit](#phase-5--evaluation--audit) ✅
 8. [Phase 6 — Hallucination Scoring](#phase-6--hallucination-scoring) ✅
+9. [Phase 8 — Analysis & Final Report](#phase-8--analysis--final-report) ✅
 9. [Project Structure](#project-structure)
 10. [Quick Start](#quick-start)
 11. [Data Sources & Licenses](#data-sources--licenses)
@@ -43,7 +44,8 @@ Build a reproducible pipeline that:
 | 3 | Embedding & Vector Store | ✅ Complete | 2 FAISS indexes · `data/vector_store/general` + `medical` |
 | 4 | RAG Pipeline & Generation | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals |
 | 5 | Evaluation & Audit | ✅ Complete | 330 generations · 3 models × 110 questions · results in `eval_hallucination_audit/` |
-| 6 | Hallucination Scoring | ✅ Complete | 7-category taxonomy · bootstrap CIs · 4 publication charts · validated methodology |
+| 6 | Hallucination Scoring | ✅ Complete | 7-category taxonomy · bootstrap CIs · 8 publication charts · validated methodology |
+| 8 | Analysis & Final Report | ✅ Complete | 3 validated findings · 6-section report · 5 tables · reproducible analysis |
 
 ---
 
@@ -170,7 +172,16 @@ clinical-rag-audit/
     │   ├── mistral_7b_generations.json
     │   └── phi3_mini_generations.json
     └── reports/
-        └── hallucination_analysis.json  ← final audit report
+        ├── figures/                     ← 8 publication charts (300 DPI)
+        └── hallucination_analysis.json
+
+reports/
+└── phase8/                          ← Phase 8 final deliverable (self-contained)
+    ├── README.md                    ← deliverable index + key numbers
+    ├── final_report.md              ← 6-section technical report
+    ├── generate_analysis.py         ← reproducible analysis script
+    ├── tables/                      ← 5 CSV tables
+    └── figures/                     ← 8 charts (copies from results/reports/figures/)
 ```
 
 ---
@@ -868,17 +879,73 @@ results/eval_hallucination_audit/
 ├── taxonomy.csv          ← 330 rows, one label per (model, question)
 ├── scoring_summary.json  ← per-model × per-tier stats + bootstrap CIs
 
-results/reports/figures/
-├── taxonomy_distribution.png  ← stacked bar: 7 categories per model
-├── refusal_heatmap.png        ← heatmap: refusal rate per model × tier
-├── rouge_l_comparison.png     ← ROUGE-L bars with 95% CIs
-└── calibration_scatter.png    ← answerable vs unanswerable refusal scatter
-
+results/reports/figures/    ← 8 publication charts (300 DPI)
 docs/
-├── taxonomy_definitions.md    ← operational definitions, decision tree,
-│                                 validation notes (v1.1)
+├── taxonomy_definitions.md    ← operational definitions, decision tree, v1.1
 └── annotation_guidelines.md   ← eval set design and tier philosophy
 ```
+
+---
+
+## Phase 8 — Analysis & Final Report ✅
+
+### 8.1 Overview
+
+Phase 8 consolidates all findings into a self-contained deliverable at `reports/phase8/`. All numbers are generated from real project data — no synthetic values.
+
+---
+
+### 8.2 Three Validated Findings
+
+| # | Finding | Evidence |
+|---|---------|---------|
+| 1 | **Mistral-7B is the most calibrated model** (52.7% overall correct) | Highest answerable engagement (22/30) + second-best unanswerable refusal (27/29) |
+| 2 | **Over-refusal dominates failure modes** (35–55%), not fabrication (≤1.8%) | Rule-based taxonomy across 330 generations; 3 spot-checks confirmed |
+| 3 | **Phi-3-mini ignores retrieved context** (overlap 0.199 vs ~0.50 for others) | Context overlap with 95% bootstrap CIs; gap-filling 10.0%, factual drift 7.3% |
+
+---
+
+### 8.3 Deliverable Structure
+
+```
+reports/phase8/
+├── README.md                    ← deliverable index with key numbers table
+├── final_report.md              ← 6-section technical report
+│     §1 Introduction + research questions
+│     §2 Methodology (corpus, models, eval set, taxonomy)
+│     §3 Results (4 tables with real numbers)
+│     §4 Discussion (3 findings + root-cause analysis)
+│     §5 Limitations (6 explicit, falsifiable limitations)
+│     §6 Conclusion (3 actionable next steps)
+│     Appendices A–C (eval set stats, validation, reproducibility)
+├── generate_analysis.py         ← regenerates all tables from project data
+├── tables/
+│   ├── headline_results.csv     ← taxonomy % per model
+│   ├── per_tier_results.csv     ← correct rate per model × tier
+│   ├── context_overlap.csv      ← faithfulness proxy with 95% CIs
+│   ├── answer_length_stats.csv  ← behavioral fingerprint
+│   └── hallucination_examples.csv ← 7 real examples, one per category
+└── figures/                     ← all 8 charts (same as results/reports/figures/)
+```
+
+---
+
+### 8.4 How to Use for Presentation
+
+**For slides:** use `per_tier_taxonomy.png` as the primary result figure (3×4 grid showing all models × tiers), `calibration_scatter.png` as the headline, and `behavior_matrix.png` as the "professor slide."
+
+**For the written report:** open `reports/phase8/final_report.md` — all sections are complete with real numbers, confidence intervals, and limitations stated.
+
+**To regenerate tables:**
+```bash
+python reports/phase8/generate_analysis.py
+```
+
+---
+
+### 8.5 Acknowledged Limitation
+
+No RAG-vs-no-RAG ablation was executed (GPU time constraint). We cannot claim "RAG reduces hallucination" — only that these three models under RAG exhibit these patterns. This is stated explicitly in Section 5 of the final report.
 
 ---
 
@@ -961,7 +1028,7 @@ python src/evaluation/ragas_scorer.py --model all
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-24 · **Phases 1–6 complete** · 330 generations · 7-category taxonomy validated · 3 publishable findings
+> Last updated: 2026-04-24 · **Phases 1–6 + 8 complete** · 330 generations · 3 validated findings · final report in `reports/phase8/`
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
