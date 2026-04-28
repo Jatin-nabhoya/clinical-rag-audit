@@ -10,13 +10,13 @@
 
 1. [Project Goal](#project-goal)
 2. [Phase Overview](#phase-overview)
-3. [Phase 1 — Environment &amp; Data Collection](#phase-1--environment--data-collection) ✅
-4. [Phase 2 — Preprocessing &amp; Chunking](#phase-2--preprocessing--chunking) ✅
-5. [Phase 3 — Embedding &amp; Vector Store](#phase-3--embedding--vector-store) ✅
-6. [Phase 4 — RAG Pipeline &amp; Generation](#phase-4--rag-pipeline--generation) ✅
-7. [Phase 5 — Evaluation &amp; Audit](#phase-5--evaluation--audit) ✅
-8. [Phase 6 — Hallucination Scoring](#phase-6--hallucination-scoring) ✅
-9. [Phase 8 — Analysis &amp; Final Report](#phase-8--analysis--final-report) ✅
+3. [Phase 1, Environment &amp; Data Collection](#phase-1--environment--data-collection)
+4. [Phase 2, Preprocessing &amp; Chunking](#phase-2--preprocessing--chunking)
+5. [Phase 3, Embedding &amp; Vector Store](#phase-3--embedding--vector-store)
+6. [Phase 4, RAG Pipeline &amp; Generation](#phase-4--rag-pipeline--generation)
+7. [Phase 5, Evaluation &amp; Audit](#phase-5--evaluation--audit)
+8. [Phase 6, Hallucination Scoring](#phase-6--hallucination-scoring)
+9. [Phase 8, Analysis &amp; Final Report](#phase-8--analysis--final-report)
 10. [Project Structure](#project-structure)
 11. [Quick Start](#quick-start)
 12. [Data Sources &amp; Licenses](#data-sources--licenses)
@@ -37,26 +37,26 @@ Build a reproducible pipeline that:
 
 ## Phase Overview
 
-| # | Phase                         | Status      | Key Output                                                                               |
-| - | ----------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| 1 | Environment & Data Collection | ✅ Complete | 110 docs ·`data/metadata.csv` verified                                                |
-| 2 | Preprocessing & Chunking      | ✅ Complete | 2 753 clean chunks ·`data/processed/chunks_clean.jsonl`                               |
-| 3 | Embedding & Vector Store      | ✅ Complete | 2 FAISS indexes ·`data/vector_store/general` + `medical`                            |
-| 4 | RAG Pipeline & Generation     | ✅ Complete | 2,169 answers · 41.8% grounded · 58.2% correct refusals                                |
-| 5 | Evaluation & Audit            | ✅ Complete | 330 generations · 3 models × 110 questions · results in `eval_hallucination_audit/` |
-| 6 | Hallucination Scoring         | ✅ Complete | 7-category taxonomy · bootstrap CIs · 8 publication charts · validated methodology    |
-| 8 | Analysis & Final Report       | ✅ Complete | 3 validated findings · 6-section report · 5 tables · reproducible analysis            |
+| # | Phase                         | Key Output                                                                               |
+| - | ----------------------------- | ---------- |
+| 1 | Environment & Data Collection | 110 docs ·`data/metadata.csv` verified                                                |
+| 2 | Preprocessing & Chunking      | 2 753 clean chunks ·`data/processed/chunks_clean.jsonl`                               |
+| 3 | Embedding & Vector Store      | 2 FAISS indexes ·`data/vector_store/general` + `medical`                            |
+| 4 | RAG Pipeline & Generation     | 2,169 answers · 41.8% grounded · 58.2% correct refusals                                |
+| 5 | Evaluation & Audit            | 330 generations · 3 models × 110 questions · results in `eval_hallucination_audit/` |
+| 6 | Hallucination Scoring         | 7-category taxonomy · bootstrap CIs · 8 publication charts · validated methodology    |
+| 8 | Analysis & Final Report       | 3 validated findings · 6-section report · 5 tables · reproducible analysis            |
 
 ---
 
-## Phase 1 — Environment & Data Collection ✅
+## Phase 1, Environment & Data Collection
 
 ### 1.1 Environment Setup
 
 The project uses a Python 3.11 virtual environment (`.clinical-rag-audit/`).
 
 ```bash
-# Activate the environment — run this every session from project root
+# Activate the environment, run this every session from project root
 source .clinical-rag-audit/bin/activate
 ```
 
@@ -73,7 +73,7 @@ source .clinical-rag-audit/bin/activate
 | Evaluation                | `ragas`, `datasets`                                                           |
 | Notebooks                 | `jupyter`, `ipywidgets`                                                       |
 
-> `biopython`, `lxml`, `pymupdf`, and `tiktoken` were added during Phases 1–2. `.env` holds `ENTREZ_EMAIL` and `HF_TOKEN` — never committed to git.
+> `biopython`, `lxml`, `pymupdf`, and `tiktoken` were added during Phases 1–2. `.env` holds `ENTREZ_EMAIL` and `HF_TOKEN`, never committed to git.
 
 ---
 
@@ -92,7 +92,7 @@ clinical-rag-audit/
 │   └── cdc_urls.txt              ← 20 CDC/WHO fact-sheet URLs for infectious disease
 │
 ├── data/
-│   ├── metadata.csv              ← Single source of truth — one row per document
+│   ├── metadata.csv              ← Single source of truth, one row per document
 │   ├── raw/
 │   │   ├── pmc/                  ← 94 PubMed Central open-access XML articles
 │   │   ├── medlineplus/          ← 3 MedlinePlus topic JSON responses
@@ -111,7 +111,7 @@ clinical-rag-audit/
 │   ├── download_medlineplus.py   ← Pulls MedlinePlus Connect API topic summaries
 │   ├── download_cdc.py           ← Scrapes CDC / WHO HTML fact-sheet pages
 │   ├── augment_corpus.py              ← Batch-fetches PMC articles for target domains + re-runs pipeline
-│   ├── log_metadata.py           ← Shared utility — appends rows to metadata.csv
+│   ├── log_metadata.py           ← Shared utility, appends rows to metadata.csv
 │   ├── verify_metadata.py        ← Validates metadata.csv & checks all files exist
 │   ├── extract_bioasq.py         ← Filters BioASQ JSON for diabetes Q&A pairs
 │   ├── extract_medquad.py        ← Filters MedQuAD XMLs for diabetes Q&A pairs
@@ -141,16 +141,16 @@ clinical-rag-audit/
 │   └── 00_setup_check.ipynb      ← Environment & import verification notebook
 │
 ├── src/
-│   ├── ingestion/                ← Document loading & chunking (Phase 2 — complete)
-│   ├── retrieval/                ← Embeddings & FAISS (Phase 3 — complete)
+│   ├── ingestion/                ← Document loading & chunking (Phase 2, complete)
+│   ├── retrieval/                ← Embeddings & FAISS (Phase 3, complete)
 │   │   ├── embed.py              ← Builds FAISS indexes for general + medical models
 │   │   ├── retriever.py          ← Retriever class: retrieve(query, k) + format_context()
 │   │   └── inspect_index.py      ← Sanity check: 5 queries × 4 tiers × 2 indexes
-│   ├── generation/               ← LLM wrappers & RAG pipeline (Phase 4 — complete)
+│   ├── generation/               ← LLM wrappers & RAG pipeline (Phase 4, complete)
 │   │   ├── config.py             ← Model registry + lazy 4-bit NF4 BitsAndBytes config
 │   │   ├── prompts.py            ← RAG + no-RAG clinical prompt templates
 │   │   ├── llm_wrapper.py        ← Unified LLMWrapper (Llama-3 / Mistral / Phi-3)
-│   │   ├── rag_ingest_documents.py       ← RAGPipeline: retrieve → prompt → generate
+│   │   ├── rag_pipeline.py       ← RAGPipeline: retrieve → prompt → generate
 │   │   └── __init__.py           ← Public API exports
 │   └── evaluation/               ← RAGAS scorer (optional, GPU server)
 │       └── ragas_scorer.py       ← faithfulness, answer_relevancy, context_precision/recall
@@ -204,7 +204,7 @@ python scripts/download_pmc.py \
 **What this does:**
 
 - Searches PubMed Central for open-access articles matching the query.
-- Uses the **NCBI E-utilities API** (via Biopython) — rate-limited to 1 request per 400 ms.
+- Uses the **NCBI E-utilities API** (via Biopython), rate-limited to 1 request per 400 ms.
 - Downloads each article as a full **XML** file into `data/raw/pmc/`.
 - Parses the article title from the XML using `lxml`.
 - Logs every article to `data/metadata.csv` with `source=pmc`, `license=open-access`, `format=xml`.
@@ -221,7 +221,7 @@ python scripts/download_cdc.py \
 
 **What this does:**
 
-- Reads `configs/cdc_urls.txt` — CDC and WHO fact-sheet URLs covering flu, COVID-19, TB, HIV, pneumonia, and sepsis.
+- Reads `configs/cdc_urls.txt`, CDC and WHO fact-sheet URLs covering flu, COVID-19, TB, HIV, pneumonia, and sepsis.
 - Fetches each page as raw **HTML** using `requests` + 1.5 s polite delay.
 - Auto-detects `source=cdc` vs `source=who` from the URL hostname.
 - Logs every page to `data/metadata.csv` with `license=public-domain`, `format=html`.
@@ -249,23 +249,23 @@ python scripts/verify_metadata.py
 
 Two extraction scripts prepared diabetes Q&A pairs used in the initial pipeline smoke test:
 
-#### BioASQ — `scripts/extract_bioasq.py`
+#### BioASQ, `scripts/extract_bioasq.py`
 
 - Filters BioASQ-13b for diabetes-related questions → `data/processed/bioasq_diabetes_qa.json` (42 Q&A pairs).
 
-#### MedQuAD — `scripts/extract_medquad.py`
+#### MedQuAD, `scripts/extract_medquad.py`
 
 - Walks MedQuAD XMLs, filters for diabetes topics → `data/processed/medquad_diabetes_qa.json` (681 Q&A pairs).
 
-> These files were used to validate the end-to-end pipeline, not for the primary evaluation. The primary eval set is `data/processed/eval_questions.jsonl` — see Phase 5.
+> These files were used to validate the end-to-end pipeline, not for the primary evaluation. The primary eval set is `data/processed/eval_questions.jsonl`, see Phase 5.
 
 ---
 
-### 1.5 MIMIC-IV Demo — Attempted, Excluded
+### 1.5 MIMIC-IV Demo, Attempted, Excluded
 
 MIMIC-IV demo was explored as an optional source for real clinical notes.
 
-**Decision:** Excluded. The 100-patient demo explicitly excludes free-text notes — only structured ICD/lab tables are available, which are insufficient for RAG evaluation. Script `scripts/extract_mimic_demo.py` remains for reference if full MIMIC-IV access is obtained later.
+**Decision:** Excluded. The 100-patient demo explicitly excludes free-text notes, only structured ICD/lab tables are available, which are insufficient for RAG evaluation. Script `scripts/extract_mimic_demo.py` remains for reference if full MIMIC-IV access is obtained later.
 
 ---
 
@@ -286,17 +286,17 @@ MIMIC-IV demo was explored as an optional source for real clinical notes.
 
 ---
 
-## Phase 2 — Preprocessing & Chunking ✅
+## Phase 2, Preprocessing & Chunking
 
-### 2.1 Text Extraction — `scripts/extract_text.py`
+### 2.1 Text Extraction, `scripts/extract_text.py`
 
 Handles all three raw formats in the corpus:
 
-| Format    | Source          | Extractor                                                                       |
-| --------- | --------------- | ------------------------------------------------------------------------------- |
-| `.xml`  | PMC articles    | `extract_xml()` — pulls title + abstract + body `<p>` tags via ElementTree |
-| `.html` | CDC / WHO pages | `extract_html()` — strips nav/scripts/footer with BeautifulSoup              |
-| `.json` | MedlinePlus     | `extract_json_medlineplus()` — parses MedlinePlus Connect feed entries       |
+| Format    | Source          | Extractor                                                                     |
+| --------- | --------------- | ----------------------------------------------------------------------------- |
+| `.xml`  | PMC articles    | `extract_xml()`, pulls title + abstract + body `<p>` tags via ElementTree |
+| `.html` | CDC / WHO pages | `extract_html()`, strips nav/scripts/footer with BeautifulSoup              |
+| `.json` | MedlinePlus     | `extract_json_medlineplus()`, parses MedlinePlus Connect feed entries       |
 
 ```bash
 python scripts/extract_text.py   # preview extraction stats per file
@@ -304,7 +304,7 @@ python scripts/extract_text.py   # preview extraction stats per file
 
 ---
 
-### 2.2 Chunking — `scripts/chunk_documents.py`
+### 2.2 Chunking, `scripts/chunk_documents.py`
 
 Token-aware chunking using LangChain's `RecursiveCharacterTextSplitter`:
 
@@ -319,7 +319,7 @@ Exposes a single `chunk_text(text: str) -> list[str]` function imported by `inge
 
 ---
 
-### 2.3 Full Pipeline — `scripts/ingest_documents.py`
+### 2.3 Full Pipeline, `scripts/ingest_documents.py`
 
 Runs the complete Extract → Chunk → Metadata → JSONL chain across all documents in `metadata.csv`:
 
@@ -365,7 +365,7 @@ cdc                 5 chunks  (avg 440 tokens)
 
 The initial corpus had a 57:1 domain skew (1 715 cardiology vs 30 infectious_disease). Two scripts fix this:
 
-#### `scripts/relabel_domains.py` — Keyword-based relabeling
+#### `scripts/relabel_domains.py`, Keyword-based relabeling
 
 - Scores each document's chunks against a 5-domain keyword map.
 - Title hits are weighted 3× over body text hits to avoid false positives.
@@ -375,7 +375,7 @@ The initial corpus had a 57:1 domain skew (1 715 cardiology vs 30 infectious_dis
 python scripts/relabel_domains.py
 ```
 
-#### `scripts/augment_corpus.py` — Targeted data augmentation
+#### `scripts/augment_corpus.py`, Targeted data augmentation
 
 - Runs 6 infectious disease queries against PMC (tuberculosis, HIV, sepsis, influenza, COVID-19, pneumonia), 10 articles each.
 - Skips articles already on disk or in `metadata.csv`.
@@ -389,7 +389,7 @@ python scripts/augment_corpus.py
 
 ---
 
-### 2.5 Chunk Cleaning — `scripts/clean_chunks.py`
+### 2.5 Chunk Cleaning, `scripts/clean_chunks.py`
 
 Post-processing pass that fixes three data quality issues:
 
@@ -417,7 +417,7 @@ Output chunks     : 2 753
 
 ---
 
-### 2.6 Final Corpus Stats (Phase 2 Complete)
+### 2.6 Final Corpus Stats
 
 ```
 Total chunks  : 2 753
@@ -441,11 +441,11 @@ python scripts/inspect_corpus.py   # verify distribution + 10 random chunks
 
 ---
 
-## Phase 3 — Embedding & Vector Store ✅
+## Phase 3, Embedding & Vector Store
 
 ### 3.1 Embedding Models
 
-Two models are used — one general-purpose baseline and one medical-domain model for ablation:
+Two models are used, one general-purpose baseline and one medical-domain model for ablation:
 
 | Key         | Model                                      | Dim | Size    | Purpose  |
 | ----------- | ------------------------------------------ | --- | ------- | -------- |
@@ -456,7 +456,7 @@ Both indexes use **FAISS IndexFlatIP** (exact cosine similarity via L2-normalize
 
 ---
 
-### 3.2 Building Indexes — `src/retrieval/embed.py`
+### 3.2 Building Indexes, `src/retrieval/embed.py`
 
 ```bash
 # Build general index (~1 min on CPU)
@@ -487,7 +487,7 @@ data/vector_store/
 
 ---
 
-### 3.3 Retriever — `src/retrieval/retriever.py`
+### 3.3 Retriever, `src/retrieval/retriever.py`
 
 ```python
 from src.retrieval.retriever import Retriever
@@ -503,7 +503,7 @@ Each result contains: `chunk_id`, `text`, `score` (cosine 0–1), `rank`, `metad
 
 ---
 
-### 3.4 Sanity Check — `src/retrieval/inspect_index.py`
+### 3.4 Sanity Check, `src/retrieval/inspect_index.py`
 
 Tests both indexes with 5 queries across 4 evaluation tiers:
 
@@ -532,11 +532,11 @@ python src/retrieval/inspect_index.py --index medical
 | Risks of beta blockers                  | 0.49          | 0.91          |
 | AI market size 2024 (unanswerable)      | 0.39          | 0.89          |
 
-**Key finding:** Medical scores cluster near 0.90 due to high-dimensional PubMed space — the *ranking* is what matters for ablation, not the absolute value. The unanswerable query returning high scores on both models means the LLM will need an explicit refusal prompt in Phase 4.
+**Key finding:** Medical scores cluster near 0.90 due to high-dimensional PubMed space, the *ranking* is what matters for ablation, not the absolute value. The unanswerable query returning high scores on both models means the LLM will need an explicit refusal prompt in Phase 4.
 
 ---
 
-## Phase 4 — RAG Pipeline & Generation ✅
+## Phase 4, RAG Pipeline & Generation
 
 ### 4.1 Overview
 
@@ -554,22 +554,22 @@ All models run with **identical 4-bit NF4 quantization** so quantization is not 
 
 ---
 
-### 4.2 Generation Config — `src/generation/config.py`
+### 4.2 Generation Config, `src/generation/config.py`
 
-| Parameter              | Value                                     | Rationale                                                                |
-| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------ |
-| Quantization           | 4-bit NF4, double-quant, bfloat16 compute | Fits all 3 models on T4 / 16 GB                                          |
-| `do_sample`          | `False` (greedy)                        | Deterministic output — required for reproducible hallucination auditing |
-| `temperature`        | `0.0`                                   | Redundant with greedy, explicit for clarity                              |
-| `max_new_tokens`     | `512`                                   | Sufficient for clinical answers                                          |
-| `repetition_penalty` | `1.1`                                   | Guards against loops in small quantized models                           |
-| `top_k` (retrieval)  | `5`                                     | Top-5 chunks passed as context                                           |
+| Parameter              | Value                                     | Rationale                                                              |
+| ---------------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| Quantization           | 4-bit NF4, double-quant, bfloat16 compute | Fits all 3 models on T4 / 16 GB                                        |
+| `do_sample`          | `False` (greedy)                        | Deterministic output, required for reproducible hallucination auditing |
+| `temperature`        | `0.0`                                   | Redundant with greedy, explicit for clarity                            |
+| `max_new_tokens`     | `512`                                   | Sufficient for clinical answers                                        |
+| `repetition_penalty` | `1.1`                                   | Guards against loops in small quantized models                         |
+| `top_k` (retrieval)  | `5`                                     | Top-5 chunks passed as context                                         |
 
 ---
 
-### 4.3 Prompt Templates — `src/generation/prompts.py`
+### 4.3 Prompt Templates, `src/generation/prompts.py`
 
-**RAG prompt** (`build_rag_prompt`) — strictly grounded:
+**RAG prompt** (`build_rag_prompt`), strictly grounded:
 
 ```
 SYSTEM: You are a clinical information assistant. Answer using ONLY the provided CONTEXT.
@@ -584,15 +584,15 @@ USER:   CONTEXT:
         ANSWER:
 ```
 
-**No-RAG prompt** (`build_no_rag_prompt`) — parametric knowledge only (Phase 5 ablation).
+**No-RAG prompt** (`build_no_rag_prompt`), parametric knowledge only (Phase 5 ablation).
 
 ---
 
-### 4.4 LLM Wrapper — `src/generation/llm_wrapper.py`
+### 4.4 LLM Wrapper, `src/generation/llm_wrapper.py`
 
 Handles per-model quirks automatically:
 
-- **Mistral-7B** does not accept a `system` role in its chat template — the system prompt is folded into the first user turn.
+- **Mistral-7B** does not accept a `system` role in its chat template, the system prompt is folded into the first user turn.
 - `apply_chat_template` handles all format differences (Llama-3, Mistral, Phi-3) uniformly.
 - `unload()` releases GPU memory between models via `gc.collect() + torch.cuda.empty_cache()`.
 
@@ -606,7 +606,7 @@ llm.unload()   # free GPU before loading next model
 
 ---
 
-### 4.5 RAG Pipeline — `src/generation/rag_ingest_documents.py`
+### 4.5 RAG Pipeline, `src/generation/rag_pipeline.py`
 
 ```python
 from src.retrieval.retriever import Retriever
@@ -624,7 +624,7 @@ result = rag.answer("What are the first-line treatments for Type 2 diabetes?")
 
 ---
 
-### 4.6 Smoke Test — `scripts/smoke_test.py`
+### 4.6 Smoke Test, `scripts/smoke_test.py`
 
 Runs one clinical question through all three models sequentially, unloading GPU memory between each:
 
@@ -638,7 +638,7 @@ python scripts/smoke_test.py --model all       # all three
 
 ### 4.6 Pipeline Validation Run (Kaggle T4)
 
-An initial end-to-end run was performed to validate the pipeline across all three models before formal evaluation. **This was a smoke test, not the evaluation** — questions came from pre-existing BioASQ/MedQuAD diabetes Q&A pairs, not the corpus-aware tier-labelled eval set.
+An initial end-to-end run was performed to validate the pipeline across all three models before formal evaluation. **This was a smoke test, not the evaluation**, questions came from pre-existing BioASQ/MedQuAD diabetes Q&A pairs, not the corpus-aware tier-labelled eval set.
 
 Outputs are archived at `results/pipeline_validation/` with a README explaining their scope.
 
@@ -647,48 +647,46 @@ Outputs are archived at `results/pipeline_validation/` with a README explaining 
 | Questions per model            | 723 (BioASQ + MedQuAD diabetes Q&A) |
 | Answered (grounded response)   | 41.8% (907 / 2,169)                 |
 | Refused (context insufficient) | 58.2% (1,262 / 2,169)               |
-| GPU mem — Llama-3-8B          | 2.05 GB                             |
-| GPU mem — Mistral-7B          | 2.17 GB                             |
-| GPU mem — Phi-3-mini          | 1.35 GB                             |
+| GPU mem, Llama-3-8B            | 2.05 GB                             |
+| GPU mem, Mistral-7B            | 2.17 GB                             |
+| GPU mem, Phi-3-mini            | 1.35 GB                             |
 
-**Key finding from smoke test:** The anti-hallucination prompt works — all three models refused rather than fabricated when context was insufficient. The high refusal rate reflected corpus/question mismatch (diabetes questions vs. a multi-domain clinical corpus), which is why Phase 5 uses a corpus-aware question set.
+**Key finding from smoke test:** The anti-hallucination prompt works, all three models refused rather than fabricated when context was insufficient. The high refusal rate reflected corpus/question mismatch (diabetes questions vs. a multi-domain clinical corpus), which is why Phase 5 uses a corpus-aware question set.
 
 ---
 
-## Phase 5 — Evaluation & Audit ✅
+## Phase 5, Evaluation & Audit
 
 ### 5.1 Overview
 
-Phase 5 runs 110 purpose-built clinical questions through all three LLMs and measures hallucination behaviour across four failure-mode tiers. The eval set is **corpus-aware and retrieval-validated** — not recycled from BioASQ/MedQuAD.
-
-**Status:** Complete. 330 generations collected (110 questions × 3 models). Results in `results/eval_hallucination_audit/`.
+Phase 5 runs 110 purpose-built clinical questions through all three LLMs and measures hallucination behaviour across four failure-mode tiers. The eval set is **corpus-aware and retrieval-validated**, not recycled from BioASQ/MedQuAD.
 
 ---
 
 ### 5.2 Hallucination Tiers
 
-| Tier         | Count | Hallucination risk tested                                                | Expected behavior   |
-| ------------ | ----- | ------------------------------------------------------------------------ | ------------------- |
-| Answerable   | 30    | Factual drift — model answers but changes specific values               | `cite_and_answer` |
-| Partial      | 31    | Gap filling — model invents info the corpus doesn't have                | `acknowledge_gap` |
-| Ambiguous    | 20    | False certainty — model picks one answer for an underspecified question | `present_options` |
-| Unanswerable | 29    | Fabrication — model answers instead of refusing                         | `refuse`          |
+| Tier         | Count | Hallucination risk tested                                              | Expected behavior   |
+| ------------ | ----- | ---------------------------------------------------------------------- | ------------------- |
+| Answerable   | 30    | Factual drift, model answers but changes specific values               | `cite_and_answer` |
+| Partial      | 31    | Gap filling, model invents info the corpus doesn't have                | `acknowledge_gap` |
+| Ambiguous    | 20    | False certainty, model picks one answer for an underspecified question | `present_options` |
+| Unanswerable | 29    | Fabrication, model answers instead of refusing                         | `refuse`          |
 
 Each tier maps to a `hallucination_target` field in the eval set for downstream analysis.
 
 ---
 
-### 5.3 Eval Set — `data/processed/eval_questions.jsonl`
+### 5.3 Eval Set, `data/processed/eval_questions.jsonl`
 
 Generated by `scripts/generate_eval_questions.py` using the corpus topic map from `scripts/explore_corpus.py`.
 
 **Design principles:**
 
-- Questions freshly written for this corpus — not recycled from BioASQ/MedQuAD
-- All `direct_lookup` questions are **specific-answer** (no yes/no — 50% random-guess baseline)
+- Questions freshly written for this corpus, not recycled from BioASQ/MedQuAD
+- All `direct_lookup` questions are **specific-answer** (no yes/no, 50% random-guess baseline)
 - 8 diabetes questions included (corpus has 227 diabetes + 79 insulin chunks)
 - Unanswerable questions use terms confirmed absent: dialysis, inhaler, emphysema, leukemia, osteoporosis
-- Out-of-domain questions cover psychiatry, dermatology, neurology — entirely outside all 7 corpus domains
+- Out-of-domain questions cover psychiatry, dermatology, neurology, entirely outside all 7 corpus domains
 - Retrieval-validated with PubMedBERT (calibrated threshold 0.916); 6 boundary warnings inspected manually
 
 **Domain distribution:**
@@ -733,7 +731,7 @@ python scripts/validate_questions.py --no-retrieval  # fast schema check only
 
 ### 5.4 Evaluation Scripts
 
-#### `scripts/run_inference.py` — GPU server (Kaggle/university)
+#### `scripts/run_inference.py`, GPU server (Kaggle/university)
 
 Runs all 110 questions through Llama-3-8B, Mistral-7B, Phi-3-mini sequentially. Saves generations to `results/eval_hallucination_audit/`.
 
@@ -742,7 +740,7 @@ python scripts/run_inference.py              # all 3 models
 python scripts/run_inference.py --model mistral  # single model
 ```
 
-#### `scripts/analyze_hallucinations.py` — Mac (no GPU needed)
+#### `scripts/analyze_hallucinations.py`, Mac (no GPU needed)
 
 Reads generations, computes ROUGE-L, refusal rates, and keyword recall per model × tier.
 
@@ -750,7 +748,7 @@ Reads generations, computes ROUGE-L, refusal rates, and keyword recall per model
 python scripts/analyze_hallucinations.py
 ```
 
-#### `scripts/generate_report.py` — Mac (no GPU needed)
+#### `scripts/generate_report.py`, Mac (no GPU needed)
 
 Produces the final cross-model hallucination audit report.
 
@@ -759,7 +757,7 @@ python scripts/generate_report.py               # local metrics only
 python scripts/generate_report.py --with-ragas  # include RAGAS scores
 ```
 
-#### `src/evaluation/ragas_scorer.py` — GPU server
+#### `src/evaluation/ragas_scorer.py`, GPU server
 
 Runs RAGAS metrics (faithfulness, answer_relevancy, context_precision, context_recall) using retrieved chunks as context.
 
@@ -771,7 +769,7 @@ python src/evaluation/ragas_scorer.py --model all
 
 ### 5.5 Generation Results (Server Run Complete)
 
-**Refusal rate by model × tier — comprehensive detection:**
+**Refusal rate by model × tier, comprehensive detection:**
 
 | Model      | Answerable (n=30) | Partial (n=31) | Ambiguous (n=20) | Unanswerable (n=29) | Overall        |
 | ---------- | ----------------- | -------------- | ---------------- | ------------------- | -------------- |
@@ -781,8 +779,8 @@ python src/evaluation/ragas_scorer.py --model all
 
 **Key findings from generation run:**
 
-- **Mistral-7B** is the most calibrated — correct refusal rate 27/29 on unanswerable, answers 22/30 answerable
-- **Llama-3-8B** is over-cautious — refuses 22/30 answerable questions (utility failure)
+- **Mistral-7B** is the most calibrated, correct refusal rate 27/29 on unanswerable, answers 22/30 answerable
+- **Llama-3-8B** is over-cautious, refuses 22/30 answerable questions (utility failure)
 - **Phi-3-mini** matches Mistral on unanswerable refusals (27/29) but refuses more answerable questions
 - **Confirmed fabrications:** Phi-3 answered Alzheimer's staging with "MMSE" (parametric knowledge, not in context); Mistral cited Terazosin from an unrelated chunk for Parkinson's disease
 
@@ -796,17 +794,15 @@ results/eval_hallucination_audit/
 └── summary.json                  ← aggregated per-model × per-tier stats
 ```
 
-> `results/pipeline_validation/` contains archived initial smoke test outputs — not the evaluation results.
+> `results/pipeline_validation/` contains archived initial smoke test outputs, not the evaluation results.
 
 ---
 
-## Phase 6 — Hallucination Scoring ✅
+## Phase 6, Hallucination Scoring
 
 ### 6.1 Overview
 
 Phase 6 applies a rule-based 7-category taxonomy to all 330 model generations, computes ROUGE-L and context overlap metrics with bootstrap 95% confidence intervals, and produces four publication-quality comparison charts. No external API required.
-
-**Status:** Complete. Methodology validated; findings confirmed by manual spot-checks.
 
 ---
 
@@ -828,7 +824,7 @@ Each (question, answer) pair receives one of seven mutually exclusive labels. Fu
 
 ### 6.3 Key Results
 
-**Taxonomy distribution — % of all 110 questions per model:**
+**Taxonomy distribution, % of all 110 questions per model:**
 
 | Model                | Correct (refusal + grounded) | Over-refusal    | Gap-filling     | Factual drift  | Fabrication |
 | -------------------- | ---------------------------- | --------------- | --------------- | -------------- | ----------- |
@@ -844,7 +840,7 @@ Each (question, answer) pair receives one of seven mutually exclusive labels. Fu
 | **Mistral-7B** | 0.150 [0.130–0.171] | **0.187 [0.153–0.220]** | **0.160 [0.137–0.187]** |
 | Phi-3-mini           | 0.112 [0.094–0.131] | 0.099 [0.083–0.115]           | 0.099 [0.088–0.110]           |
 
-**Context overlap (local faithfulness proxy — fraction of answer words in retrieved context):**
+**Context overlap (local faithfulness proxy, fraction of answer words in retrieved context):**
 
 | Model                | Answerable      | Partial         | Overall         |
 | -------------------- | --------------- | --------------- | --------------- |
@@ -858,11 +854,11 @@ Each (question, answer) pair receives one of seven mutually exclusive labels. Fu
 
 **1. Mistral-7B achieves best overall correctness (52.7%)**, driven by the most balanced refusal calibration: refuses 27/29 unanswerable questions while answering 22/30 answerable questions.
 
-**2. Over-refusal is the dominant failure mode across all three models (35–55%)**, substantially exceeding fabrication (≤1.8%). Safety-tuned open-source LLMs in clinical RAG settings err toward excessive caution — a utility problem, not a safety problem. Llama-3's over-refusals are retriever-driven (wrong chunks retrieved), not model-level over-caution; the correct remediation is retriever improvement.
+**2. Over-refusal is the dominant failure mode across all three models (35–55%)**, substantially exceeding fabrication (≤1.8%). Safety-tuned open-source LLMs in clinical RAG settings err toward excessive caution, a utility problem, not a safety problem. Llama-3's over-refusals are retriever-driven (wrong chunks retrieved), not model-level over-caution; the correct remediation is retriever improvement.
 
-**3. Phi-3-mini ignores retrieved context and answers from parametric knowledge.** Context overlap is 0.199 vs ~0.50 for the other two models — Phi-3's answers contain 3× less content from the retrieved context. Combined with 10.0% gap-filling and 7.3% factual drift, this indicates Phi-3 uses parametric knowledge to complete partial answers without flagging the gap.
+**3. Phi-3-mini ignores retrieved context and answers from parametric knowledge.** Context overlap is 0.199 vs ~0.50 for the other two models, Phi-3's answers contain 3× less content from the retrieved context. Combined with 10.0% gap-filling and 7.3% factual drift, this indicates Phi-3 uses parametric knowledge to complete partial answers without flagging the gap.
 
-> *Statistical note: n=110 per model, ~25–31 per tier. Bootstrap CIs are wide at tier level — cross-model differences are robust; tier-level findings are directional.*
+> *Statistical note: n=110 per model, ~25–31 per tier. Bootstrap CIs are wide at tier level, cross-model differences are robust; tier-level findings are directional.*
 
 ---
 
@@ -874,7 +870,7 @@ Three spot-checks were performed (2026-04-24):
 - **10 Phi-3 gap-fills** → 10/10 confirmed (specific medical values absent from context)
 - **5 Llama-3 correct-refusals on unanswerable** → 5/5 unambiguous clean refusals
 
-Llama-3's **0.0% fabrication rate is confirmed** — not a classifier artifact.
+Llama-3's **0.0% fabrication rate is confirmed**, not a classifier artifact.
 
 ---
 
@@ -883,7 +879,7 @@ Llama-3's **0.0% fabrication rate is confirmed** — not a classifier artifact.
 ```bash
 python scripts/score_hallucinations.py   # taxonomy + ROUGE-L + bootstrap CIs
 python scripts/visualize_results.py      # 4 comparison charts (no GPU needed)
-# Optional — requires LLM judge API:
+# Optional, requires LLM judge API:
 python src/evaluation/ragas_scorer.py --model all
 ```
 
@@ -904,11 +900,11 @@ docs/
 
 ---
 
-## Phase 8 — Analysis & Final Report ✅
+## Phase 8, Analysis & Final Report
 
 ### 8.1 Overview
 
-Phase 8 consolidates all findings into a self-contained deliverable at `reports/phase8/`. All numbers are generated from real project data — no synthetic values.
+Phase 8 consolidates all findings into a conference-style paper at `docs/clinical_rag_paper.md`. All numbers are generated from real project data, no synthetic values.
 
 ---
 
@@ -922,48 +918,9 @@ Phase 8 consolidates all findings into a self-contained deliverable at `reports/
 
 ---
 
-### 8.3 Deliverable Structure
-
-```
-reports/phase8/
-├── README.md                    ← deliverable index with key numbers table
-├── final_report.md              ← 6-section technical report
-│     1. Introduction + research questions
-│     2. Methodology (corpus, models, eval set, taxonomy)
-│     3. Results (4 tables with real numbers)
-│     4. Discussion (3 findings + root-cause analysis)
-│     5. Limitations (6 explicit, falsifiable limitations)
-│     6. Conclusion (3 actionable next steps)
-│     Appendices A–C (eval set stats, validation, reproducibility)
-├── generate_analysis.py         ← regenerates all tables from project data
-├── tables/
-│   ├── headline_results.csv     ← taxonomy % per model
-│   ├── per_tier_results.csv     ← correct rate per model × tier
-│   ├── context_overlap.csv      ← faithfulness proxy with 95% CIs
-│   ├── answer_length_stats.csv  ← behavioral fingerprint
-│   └── hallucination_examples.csv ← 7 real examples, one per category
-└── figures/                     ← all 8 charts (same as results/reports/figures/)
-```
-
----
-
-### 8.4 How to Use for Presentation
-
-**For slides:** use `per_tier_taxonomy.png` as the primary result figure (3×4 grid showing all models × tiers), `calibration_scatter.png` as the headline, and `behavior_matrix.png` as the "professor slide."
-
-**For the written report:** open `reports/phase8/final_report.md` — all sections are complete with real numbers, confidence intervals, and limitations stated.
-
-**To regenerate tables:**
-
-```bash
-python reports/phase8/generate_analysis.py
-```
-
----
-
 ### 8.5 Acknowledged Limitation
 
-No RAG-vs-no-RAG ablation was executed (GPU time constraint). We cannot claim "RAG reduces hallucination" — only that these three models under RAG exhibit these patterns. This is stated explicitly in Section 5 of the final report.
+No RAG-vs-no-RAG ablation was executed (GPU time constraint). We cannot claim "RAG reduces hallucination", only that these three models under RAG exhibit these patterns. This is stated explicitly in Section 5 of the final report.
 
 ---
 
@@ -1003,26 +960,26 @@ python src/retrieval/embed.py --model general   # ~1 min, 4.2 MB index
 python src/retrieval/embed.py --model medical   # ~3 min, 8.5 MB index
 python src/retrieval/inspect_index.py --index all  # sanity check both
 
-# 8. Pipeline smoke test (Phase 4) — requires CUDA GPU
+# 8. Pipeline smoke test (Phase 4), requires CUDA GPU
 python scripts/smoke_test.py --model mistral   # test one model first
 python scripts/smoke_test.py --model all       # validate all three
 
-# 9. Build gold eval set (Phase 5) — Mac, no GPU needed
+# 9. Build gold eval set (Phase 5), Mac, no GPU needed
 python scripts/explore_corpus.py             # inspect corpus topic coverage
 python scripts/generate_eval_questions.py    # generate 110 questions
 python scripts/validate_questions.py         # retrieval-validate (activate venv first)
 
-# 10. Run evaluation — requires CUDA GPU (university server / Kaggle)
+# 10. Run evaluation, requires CUDA GPU (university server / Kaggle)
 python scripts/run_inference.py      # 110 questions × 3 models
 
-# 11. Analyze results — Mac, no GPU needed
+# 11. Analyze results, Mac, no GPU needed
 python scripts/analyze_hallucinations.py     # ROUGE-L, refusal rates, keyword recall
 python scripts/generate_report.py           # final hallucination audit report
 
-# 12. Hallucination scoring (Phase 6) — Mac, no GPU needed
+# 12. Hallucination scoring (Phase 6), Mac, no GPU needed
 python scripts/score_hallucinations.py      # 7-category taxonomy + ROUGE-L + bootstrap CIs
 python scripts/visualize_results.py         # 4 publication-quality comparison charts
-# Optional — requires LLM judge API key (Groq free tier / OpenAI):
+# Optional, requires LLM judge API key (Groq free tier / OpenAI):
 python src/evaluation/ragas_scorer.py --model all
 ```
 
@@ -1030,15 +987,15 @@ python src/evaluation/ragas_scorer.py --model all
 
 ## Data Sources & Licenses
 
-| Source               | License                 | Access Method           | Status                                      |
-| -------------------- | ----------------------- | ----------------------- | ------------------------------------------- |
-| PubMed Central (PMC) | Open Access / CC-BY     | NCBI E-utilities API    | ✅ 94 docs                                  |
-| CDC Fact Sheets      | Public Domain (US Gov)  | Web scraping            | ✅ 8 docs                                   |
-| WHO Fact Sheets      | CC-BY-NC-SA 3.0 IGO     | Web scraping            | ✅ 5 docs                                   |
-| MedlinePlus          | Public Domain (NLM/NIH) | MedlinePlus Connect API | ✅ 3 docs                                   |
-| MedQuAD              | CC-BY 4.0               | GitHub repo             | ✅ Eval set                                 |
-| BioASQ               | BioASQ License          | bioasq.org registration | ✅ Eval set                                 |
-| MIMIC-IV Demo        | PhysioNet CDHL-1.5.0    | PhysioNet download      | ⚠️ Excluded — no free-text notes in demo |
+| Source               | License                 | Access Method           | Status                                    |
+| -------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
+| PubMed Central (PMC) | Open Access / CC-BY     | NCBI E-utilities API    | ✅ 94 docs                                |
+| CDC Fact Sheets      | Public Domain (US Gov)  | Web scraping            | ✅ 8 docs                                 |
+| WHO Fact Sheets      | CC-BY-NC-SA 3.0 IGO     | Web scraping            | ✅ 5 docs                                 |
+| MedlinePlus          | Public Domain (NLM/NIH) | MedlinePlus Connect API | ✅ 3 docs                                 |
+| MedQuAD              | CC-BY 4.0               | GitHub repo             | ✅ Eval set                               |
+| BioASQ               | BioASQ License          | bioasq.org registration | ✅ Eval set                               |
+| MIMIC-IV Demo        | PhysioNet CDHL-1.5.0    | PhysioNet download      | ⚠️ Excluded, no free-text notes in demo |
 
 > Raw data files are **git-ignored** (`data/raw/*`). Only `metadata.csv` is committed as the corpus manifest.
 
@@ -1046,7 +1003,7 @@ python src/evaluation/ragas_scorer.py --model all
 
 ## Corpus Snapshot
 
-> Last updated: 2026-04-24 · **Phases 1–6 + 8 complete** · 330 generations · 3 validated findings · final report in `reports/phase8/`
+> Last updated: 2026-04-24 · 330 generations · 3 validated findings · paper in `docs/clinical_rag_paper.md`
 
 ```
 Total documents : 110  (94 PMC + 8 CDC + 5 WHO + 3 MedlinePlus)
