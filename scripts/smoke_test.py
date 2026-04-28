@@ -1,10 +1,12 @@
 """
-Phase 4 smoke test — run one question through all 3 LLMs with RAG.
-Loads models sequentially to fit on a single GPU (T4 / 16 GB).
+Clinical RAG Hallucination Audit — Pipeline Smoke Test.
+Runs one sample question through all 3 LLMs end-to-end to verify the
+retrieval → prompt → generation pipeline is working before the full run.
+Loads models sequentially to fit on a single GPU (≥16 GB VRAM).
 
 Usage:
-    python scripts/test_rag_generation.py               # all 3 models
-    python scripts/test_rag_generation.py --model mistral
+    python scripts/smoke_test.py                  # all 3 models
+    python scripts/smoke_test.py --model mistral  # single model
 """
 import argparse
 import sys

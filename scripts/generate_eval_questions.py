@@ -9,7 +9,7 @@ topic map from explore_corpus.py. Three reviewer-driven fixes applied:
      inhaler question re-framed to test fabrication risk
 
 These questions are NOT from BioASQ/MedQuAD. They must be run through
-the models on Kaggle (scripts/run_phase5_generation.py).
+the models on Kaggle (scripts/run_inference.py).
 
 Usage:
     python scripts/generate_eval_questions.py
@@ -789,7 +789,7 @@ def main():
        python scripts/validate_questions.py --no-retrieval
 
   2. Push to GitHub, then run on Kaggle:
-       python scripts/run_phase5_generation.py
+       python scripts/run_inference.py
 
   3. After Kaggle run, pull results:
        python scripts/phase5_analysis.py

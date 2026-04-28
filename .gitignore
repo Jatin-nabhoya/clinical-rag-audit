@@ -35,3 +35,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Reports folder: commit paper, pipeline diagram, phase8 deliverables
+# (remove any old blanket ignore that was accidentally added)

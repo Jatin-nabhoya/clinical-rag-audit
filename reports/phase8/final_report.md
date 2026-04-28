@@ -302,7 +302,7 @@ git clone https://github.com/Jatin-nabhoya/clinical-rag-audit.git
 pip install -r requirements.txt
 # Place vector store (14 MB) at data/vector_store/medical/
 python scripts/generate_eval_questions.py
-python scripts/run_phase5_generation.py  # requires CUDA GPU
+python scripts/run_inference.py  # requires CUDA GPU
 python scripts/score_hallucinations.py
 python scripts/visualize_results.py
 python reports/phase8/generate_analysis.py

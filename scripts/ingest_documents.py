@@ -1,4 +1,4 @@
-# Step 3: Full Pipeline — Extract → Chunk → Attach Metadata → Save JSONL
+# Document Ingestion — Extract text → Chunk → Attach metadata → Save JSONL
 
 import csv
 import json

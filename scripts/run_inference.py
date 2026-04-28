@@ -1,11 +1,13 @@
 """
-Clinical RAG Hallucination Audit — Evaluation Generation Script.
-Runs 110 eval questions through Llama-3-8B, Mistral-7B, and Phi-3-mini
-sequentially on a Kaggle T4 GPU. Saves per-model generations + combined CSV.
+Clinical RAG Hallucination Audit — LLM Inference Script.
+Runs 110 evaluation questions through Llama-3-8B, Mistral-7B, and Phi-3-mini
+sequentially on a GPU server. Saves per-model generations + combined CSV.
 
-Usage (Kaggle):
-    python scripts/run_phase5_generation.py
-    python scripts/run_phase5_generation.py --model mistral_7b
+Requires: CUDA GPU with ≥16 GB VRAM (run on university GPU server via SSH).
+
+Usage:
+    python scripts/run_inference.py                    # all 3 models
+    python scripts/run_inference.py --model mistral_7b # single model
 """
 import argparse
 import json

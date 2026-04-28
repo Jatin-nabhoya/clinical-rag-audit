@@ -1,4 +1,4 @@
-# Fetch additional PMC articles for underrepresented domains, then re-run pipeline
+# Fetch additional PMC articles for underrepresented domains, then re-run document ingestion
 
 import csv
 import subprocess
@@ -31,29 +31,29 @@ def load_existing_doc_ids() -> set[str]:
         return {row["doc_id"] for row in csv.DictReader(fh)}
 
 
-def run_pipeline() -> None:
-    script = ROOT / "scripts" / "pipeline.py"
-    print(f"\n[fetch_pmc] re-running pipeline ...")
+def run_ingestion() -> None:
+    script = ROOT / "scripts" / "ingest_documents.py"
+    print(f"\n[augment_corpus] re-running document ingestion ...")
     result = subprocess.run(
         [sys.executable, str(script)],
         cwd=str(ROOT / "scripts"),
         check=False,
     )
     if result.returncode != 0:
-        print(f"[fetch_pmc] pipeline exited with code {result.returncode}", file=sys.stderr)
+        print(f"[augment_corpus] ingestion exited with code {result.returncode}", file=sys.stderr)
     else:
-        print("[fetch_pmc] pipeline complete.")
+        print("[augment_corpus] ingestion complete.")
 
 
 if __name__ == "__main__":
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     existing = load_existing_doc_ids()
-    print(f"[fetch_pmc] {len(existing)} doc_ids already in metadata.csv")
+    print(f"[augment_corpus] {len(existing)} doc_ids already in metadata.csv")
 
     total_new = 0
 
     for query, domain_tag, max_results in FETCH_PLAN:
-        print(f"\n[fetch_pmc] query='{query}'  domain={domain_tag}  max={max_results}")
+        print(f"\n[augment_corpus] query='{query}'  domain={domain_tag}  max={max_results}")
         pmids = search_pmids(query, max_results)
         print(f"  → {len(pmids)} PMC IDs returned")
 
@@ -87,9 +87,9 @@ if __name__ == "__main__":
             existing.add(doc_id)
             total_new += 1
 
-    print(f"\n[fetch_pmc] fetched {total_new} new article(s).")
+    print(f"\n[augment_corpus] fetched {total_new} new article(s).")
 
     if total_new > 0:
-        run_pipeline()
+        run_ingestion()
     else:
-        print("[fetch_pmc] no new articles — skipping pipeline re-run.")
+        print("[augment_corpus] no new articles — skipping ingestion re-run.")
