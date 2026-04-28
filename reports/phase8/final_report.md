@@ -2,7 +2,7 @@
 ## Final Technical Report
 
 **Course:** Natural Language Processing — Graduate Seminar  
-**Institution:** University of New Hampshire  
+**Institution:** University of New Haven  
 **Team:** Jatin Nabhoya · Mohit Raiyani  
 **Date:** 2026-04-24  
 **Version:** 1.0  

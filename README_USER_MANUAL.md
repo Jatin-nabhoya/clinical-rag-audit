@@ -3,7 +3,7 @@
 > A reproducible pipeline for comparing hallucination behaviour across open-source LLMs in a clinical Retrieval-Augmented Generation setting.
 
 **Authors:** Jatin Nabhoya · Mohit Raiyani  
-**Institution:** University of New Hampshire — Graduate NLP Seminar, 2026  
+**Institution:** University of New Haven — Graduate NLP Seminar, 2026  
 **Paper:** `reports/paper/clinical_rag_paper.md`  
 **Repository:** `github.com/Jatin-nabhoya/clinical-rag-audit`
 
@@ -345,7 +345,7 @@ If you use this pipeline or dataset in your research:
              A Comparative Study of Three Open-Source LLMs},
   author  = {Nabhoya, Jatin and Raiyani, Mohit},
   year    = {2026},
-  note    = {University of New Hampshire NLP Seminar Project},
+  note    = {University of New Haven NLP Seminar Project},
   url     = {https://github.com/Jatin-nabhoya/clinical-rag-audit}
 }
 ```

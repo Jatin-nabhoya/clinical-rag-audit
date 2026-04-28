@@ -363,7 +363,7 @@ The following table extends Table 1 with nine additional questions (three per ti
 
 ## Appendix C: Reproducibility
 
-**Hardware.** Data collection, preprocessing, embedding, and all analysis scripts were run on a local machine (macOS, CPU only). LLM inference (Phases 4–5) was run on a University of New Hampshire GPU server accessed via SSH, equipped with an NVIDIA GPU with sufficient VRAM to load all three 4-bit NF4 quantised models. Kaggle T4 was used for initial pipeline smoke-testing only; the university server was required for the full 110-question × 3-model evaluation because Kaggle's 20 GB disk quota was insufficient to store all three model weights simultaneously.
+**Hardware.** Data collection, preprocessing, embedding, and all analysis scripts were run on a local machine (macOS, CPU only). LLM inference (Phases 4–5) was run on a University of New Haven GPU server accessed via SSH, equipped with an NVIDIA GPU with sufficient VRAM to load all three 4-bit NF4 quantised models. Kaggle T4 was used for initial pipeline smoke-testing only; the university server was required for the full 110-question × 3-model evaluation because Kaggle's 20 GB disk quota was insufficient to store all three model weights simultaneously.
 
 All random operations use fixed seeds. The pipeline is split across two environments:
 
