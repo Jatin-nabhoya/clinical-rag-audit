@@ -2,9 +2,9 @@
 
 > A reproducible pipeline for comparing hallucination behaviour across open-source LLMs in a clinical Retrieval-Augmented Generation setting.
 
-**Authors:** Jatin Nabhoya · Mohit Raiyani  
-**Institution:** University of New Haven — Graduate NLP Seminar, 2026  
-**Paper:** `reports/paper/clinical_rag_paper.md`  
+**Authors:** Jatin Nabhoya · Mohit Raiyani
+**Institution:** University of New Haven
+**Paper:** `docs/clinical_rag_paper.md`
 **Repository:** `github.com/Jatin-nabhoya/clinical-rag-audit`
 
 ---
@@ -13,11 +13,11 @@
 
 This pipeline audits how three open-source LLMs hallucinate when deployed in a clinical RAG system:
 
-| Model | Parameters | Overall correct |
-|-------|-----------|----------------|
-| Mistral-7B-Instruct-v0.2 | 7B | **52.7%** |
-| Llama-3-8B-Instruct | 8B | 39.1% |
-| Phi-3-mini-4k-instruct | 3.8B | 36.4% |
+| Model                    | Parameters | Overall correct |
+| ------------------------ | ---------- | --------------- |
+| Mistral-7B-Instruct-v0.2 | 7B         | **52.7%** |
+| Llama-3-8B-Instruct      | 8B         | 39.1%           |
+| Phi-3-mini-4k-instruct   | 3.8B       | 36.4%           |
 
 **Key finding:** Over-refusal (35–55%) is the dominant failure mode across all models — substantially larger than fabrication (≤1.8%). Safety-tuned open-source LLMs sacrifice utility, not safety, in clinical RAG settings.
 
@@ -51,12 +51,12 @@ Output goes to `results/reports/figures/` (charts) and `reports/phase8/tables/` 
 
 ### 1. Requirements
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| Python | 3.11 | Other versions untested |
-| CUDA GPU | ≥16 GB VRAM | Kaggle T4 free tier works |
-| HuggingFace account | — | Required for Llama-3 (gated model) |
-| NCBI account | — | Optional; provide email for higher rate limits |
+| Requirement         | Version      | Notes                                          |
+| ------------------- | ------------ | ---------------------------------------------- |
+| Python              | 3.11         | Other versions untested                        |
+| CUDA GPU            | ≥16 GB VRAM | Kaggle T4 free tier works                      |
+| HuggingFace account | —           | Required for Llama-3 (gated model)             |
+| NCBI account        | —           | Optional; provide email for higher rate limits |
 
 ### 2. Installation
 
@@ -278,12 +278,12 @@ Each question in `data/processed/eval_questions.jsonl` follows this schema:
 
 ## Corpus sources and licences
 
-| Source | Docs | Format | Licence |
-|--------|------|--------|---------|
-| PubMed Central (PMC) | 94 | XML | Open Access / CC-BY |
-| CDC Fact Sheets | 8 | HTML | Public Domain (US Gov) |
-| WHO Fact Sheets | 5 | HTML | CC-BY-NC-SA 3.0 IGO |
-| MedlinePlus | 3 | JSON | Public Domain (NLM/NIH) |
+| Source               | Docs | Format | Licence                 |
+| -------------------- | ---- | ------ | ----------------------- |
+| PubMed Central (PMC) | 94   | XML    | Open Access / CC-BY     |
+| CDC Fact Sheets      | 8    | HTML   | Public Domain (US Gov)  |
+| WHO Fact Sheets      | 5    | HTML   | CC-BY-NC-SA 3.0 IGO     |
+| MedlinePlus          | 3    | JSON   | Public Domain (NLM/NIH) |
 
 Raw data files are git-ignored. Rebuild using the Phase 1 download scripts above.
 
@@ -322,14 +322,14 @@ Then run: `python scripts/run_inference.py --model my_model`
 
 ## Results summary
 
-| Metric | Llama-3-8B | Mistral-7B | Phi-3-mini |
-|--------|-----------|-----------|-----------|
-| Overall correct | 39.1% | **52.7%** | 36.4% |
-| Over-refusal | **54.5%** | 35.5% | 42.7% |
-| Fabrication | 0.0% | 1.8% | 0.9% |
-| Gap-filling | 5.5% | 4.5% | **10.0%** |
-| Context overlap (mean) | **0.567** | 0.483 | 0.199 |
-| ROUGE-L (mean) | 0.132 | **0.160** | 0.099 |
+| Metric                 | Llama-3-8B      | Mistral-7B      | Phi-3-mini      |
+| ---------------------- | --------------- | --------------- | --------------- |
+| Overall correct        | 39.1%           | **52.7%** | 36.4%           |
+| Over-refusal           | **54.5%** | 35.5%           | 42.7%           |
+| Fabrication            | 0.0%            | 1.8%            | 0.9%            |
+| Gap-filling            | 5.5%            | 4.5%            | **10.0%** |
+| Context overlap (mean) | **0.567** | 0.483           | 0.199           |
+| ROUGE-L (mean)         | 0.132           | **0.160** | 0.099           |
 
 Full tables and charts: `reports/phase8/tables/` and `results/reports/figures/`.
 
@@ -343,7 +343,7 @@ If you use this pipeline or dataset in your research:
 @misc{nabhoya2026clinicalrag,
   title   = {Auditing Hallucination in Clinical Retrieval-Augmented Generation:
              A Comparative Study of Three Open-Source LLMs},
-  author  = {Nabhoya, Jatin and Raiyani, Mohit},
+  author  = {Jatin Nabhoya and Mohit Raiyani},
   year    = {2026},
   note    = {University of New Haven NLP Seminar Project},
   url     = {https://github.com/Jatin-nabhoya/clinical-rag-audit}
@@ -370,5 +370,5 @@ If you use this pipeline or dataset in your research:
 
 ## Licence
 
-Code: MIT. See `LICENSE`.  
+Code: MIT. See `LICENSE`.
 Clinical documents: licences per source — see Corpus table above.

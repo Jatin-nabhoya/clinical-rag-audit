@@ -1,4 +1,0 @@
-model,correct_pct,over_refusal_pct,fabrication_pct,gap_filling_pct,factual_drift_pct,false_certainty_pct,n
-Llama-3-8B,39.1,54.5,0,5.5,0.9,0,110
-Mistral-7B,52.7,35.5,1.8,4.5,4.5,0.9,110
-Phi-3-mini,36.4,42.7,0.9,10.0,7.3,2.7,110

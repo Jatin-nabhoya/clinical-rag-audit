@@ -38,3 +38,5 @@ Thumbs.db
 
 # Reports folder: commit paper, pipeline diagram, phase8 deliverables
 # (remove any old blanket ignore that was accidentally added)
+# Personal pipeline diagram (local only)
+reports/pipeline/rag_pipeline.html
