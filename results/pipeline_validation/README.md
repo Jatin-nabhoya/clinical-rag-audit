@@ -1,4 +1,4 @@
-# Pipeline Validation — Archived Smoke Test
+# Pipeline Validation, Archived Smoke Test
 
 This directory contains outputs from an initial end-to-end pipeline validation
 run, not from the primary evaluation.
@@ -26,8 +26,8 @@ The eval set is at `data/processed/eval_questions.jsonl`.
 | File | Description |
 |------|-------------|
 | `llama3_8b_generations.json` | 723 generations — Llama-3-8B |
-| `mistral_7b_generations.json` | 723 generations — Mistral-7B |
-| `phi3_mini_generations.json` | 723 generations — Phi-3-mini |
+| `mistral_7b_generations.json` | 723 generations, Mistral-7B |
+| `phi3_mini_generations.json` | 723 generations, Phi-3-mini |
 | `combined_results.csv` | All 3 models merged (2,169 rows) |
 | `run.log` | Kaggle execution log |
 | `log_*.txt` | Per-model generation logs |

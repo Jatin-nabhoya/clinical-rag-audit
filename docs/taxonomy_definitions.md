@@ -182,7 +182,7 @@ Question:  What is the mechanism by which liver fibrosis progresses to
            cirrhosis?
 Answer:    [Accurate mechanistic description but using different
             terminology than the gold reference, ROUGE-L = 0.08]
-Label:     factual_drift — may be correct paraphrase; verify against
+Label:     factual_drift, may be correct paraphrase; verify against
            context overlap before reporting as hallucination.
 ```
 

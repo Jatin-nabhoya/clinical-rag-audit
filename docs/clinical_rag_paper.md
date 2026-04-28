@@ -367,7 +367,7 @@ The following table extends Table 1 with nine additional questions (three per ti
 
 All random operations use fixed seeds. The pipeline is split across two environments:
 
-**Step 1 — Local machine (CPU): data collection, preprocessing, embedding, analysis**
+**Step 1, Local machine (CPU): data collection, preprocessing, embedding, analysis**
 
 ```bash
 git clone https://github.com/Jatin-nabhoya/clinical-rag-audit.git
@@ -395,7 +395,7 @@ python scripts/generate_eval_questions.py
 python scripts/validate_questions.py --no-retrieval
 ```
 
-**Step 2 — University GPU server (SSH): LLM generation only**
+**Step 2, University GPU server (SSH): LLM generation only**
 
 ```bash
 # SSH into the university GPU server
@@ -419,7 +419,7 @@ python scripts/run_inference.py
 # scp -r <netid>@<server>:clinical-rag-audit/results/eval_hallucination_audit/ results/
 ```
 
-**Step 3 — Local machine (CPU): scoring and figures**
+**Step 3, Local machine (CPU): scoring and figures**
 
 ```bash
 # Phase 6: hallucination taxonomy + publication charts

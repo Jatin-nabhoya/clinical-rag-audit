@@ -1,4 +1,4 @@
-# Clinical RAG Hallucination Audit — User Manual
+# Clinical RAG Hallucination Audit, User Manual
 
 > A reproducible pipeline for comparing hallucination behaviour across open-source LLMs in a clinical Retrieval-Augmented Generation setting.
 
@@ -19,11 +19,11 @@ This pipeline audits how three open-source LLMs hallucinate when deployed in a c
 | Llama-3-8B-Instruct      | 8B         | 39.1%           |
 | Phi-3-mini-4k-instruct   | 3.8B       | 36.4%           |
 
-**Key finding:** Over-refusal (35–55%) is the dominant failure mode across all models — substantially larger than fabrication (≤1.8%). Safety-tuned open-source LLMs sacrifice utility, not safety, in clinical RAG settings.
+**Key finding:** Over-refusal (35–55%) is the dominant failure mode across all models, substantially larger than fabrication (≤1.8%). Safety-tuned open-source LLMs sacrifice utility, not safety, in clinical RAG settings.
 
 ---
 
-## Quick start — reproduce our analysis without a GPU
+## Quick start, reproduce our analysis without a GPU
 
 If you just want to run the scoring and visualisation on our pre-generated outputs:
 
@@ -47,7 +47,7 @@ Output goes to `results/reports/figures/` (charts) and `reports/phase8/tables/` 
 
 ---
 
-## Full pipeline — reproduce from scratch (requires CUDA GPU)
+## Full pipeline, reproduce from scratch (requires CUDA GPU)
 
 ### 1. Requirements
 
@@ -55,8 +55,8 @@ Output goes to `results/reports/figures/` (charts) and `reports/phase8/tables/` 
 | ------------------- | ------------ | ---------------------------------------------- |
 | Python              | 3.11         | Other versions untested                        |
 | CUDA GPU            | ≥16 GB VRAM | Kaggle T4 free tier works                      |
-| HuggingFace account | —           | Required for Llama-3 (gated model)             |
-| NCBI account        | —           | Optional; provide email for higher rate limits |
+| HuggingFace account |,           | Required for Llama-3 (gated model)             |
+| NCBI account        |,           | Optional; provide email for higher rate limits |
 
 ### 2. Installation
 
@@ -79,10 +79,10 @@ Create a `.env` file in the project root (never commit this):
 
 ```bash
 ENTREZ_EMAIL=your@email.com   # for NCBI E-utilities polite use
-HF_TOKEN=hf_...               # HuggingFace token — required for Llama-3
+HF_TOKEN=hf_...               # HuggingFace token, required for Llama-3
 ```
 
-### 4. Phase 1 — Data collection
+### 4. Phase 1, Data collection
 
 ```bash
 # PubMed Central articles (run once per domain)
@@ -102,7 +102,7 @@ python scripts/verify_metadata.py
 
 Expected output: `data/metadata.csv` with 110 rows.
 
-### 5. Phase 2 — Preprocessing and chunking
+### 5. Phase 2, Preprocessing and chunking
 
 ```bash
 python scripts/ingest_documents.py          # extract text → chunk → save chunks.jsonl
@@ -116,13 +116,13 @@ python scripts/inspect_corpus.py
 
 Expected output: `data/processed/chunks_clean.jsonl` with 2,753 chunks.
 
-### 6. Phase 3 — Build vector indexes
+### 6. Phase 3, Build vector indexes
 
 ```bash
-# Build the PubMedBERT medical index (used in all evaluations) — ~3 min on CPU
+# Build the PubMedBERT medical index (used in all evaluations), ~3 min on CPU
 python src/retrieval/embed.py --model medical
 
-# Build the MiniLM general baseline index — ~1 min
+# Build the MiniLM general baseline index, ~1 min
 python src/retrieval/embed.py --model general
 
 # Sanity check both indexes
@@ -131,14 +131,14 @@ python src/retrieval/inspect_index.py --index all
 
 Expected output: `data/vector_store/medical/` and `data/vector_store/general/`.
 
-### 7. Phase 4 — Pipeline smoke test (requires GPU)
+### 7. Phase 4, Pipeline smoke test (requires GPU)
 
 ```bash
 # Test one model before running the full evaluation
 python scripts/smoke_test.py --model mistral
 ```
 
-### 8. Phase 5 — Build and validate the evaluation set
+### 8. Phase 5, Build and validate the evaluation set
 
 ```bash
 # Inspect corpus topic coverage
@@ -154,7 +154,7 @@ python scripts/validate_questions.py --no-retrieval  # fast schema-only check
 
 Expected output: `data/processed/eval_questions.jsonl` (110 questions).
 
-### 9. Phase 5 — Run evaluation (requires CUDA GPU, ~2–3 hours on T4)
+### 9. Phase 5, Run evaluation (requires CUDA GPU, ~2–3 hours on T4)
 
 ```bash
 python scripts/run_inference.py              # all 3 models, 110 questions each
@@ -163,14 +163,14 @@ python scripts/run_inference.py --model mistral   # single model
 
 Expected output: `results/eval_hallucination_audit/*/generations.jsonl` (110 outputs per model).
 
-### 10. Phase 5 — Analyse results (CPU, no GPU required)
+### 10. Phase 5, Analyse results (CPU, no GPU required)
 
 ```bash
 python scripts/analyze_hallucinations.py    # ROUGE-L, refusal rates, keyword recall
 python scripts/generate_report.py           # cross-model audit report
 ```
 
-### 11. Phase 6 — Hallucination scoring and visualisation (CPU)
+### 11. Phase 6, Hallucination scoring and visualisation (CPU)
 
 ```bash
 python scripts/score_hallucinations.py      # 7-category taxonomy + bootstrap CIs
@@ -185,7 +185,7 @@ Expected output: `results/eval_hallucination_audit/taxonomy.csv`, `results/repor
 
 ```
 clinical-rag-audit/
-├── .env                          ← Secrets (never commit — git-ignored)
+├── .env                          ← Secrets (never commit, git-ignored)
 ├── requirements.txt              ← Full pip dependency list
 ├── README_USER_MANUAL.md         ← This file
 │
@@ -200,7 +200,7 @@ clinical-rag-audit/
 │   │   ├── medlineplus/          ← 3 MedlinePlus JSON responses
 │   │   └── medquad/, bioasq/     ← Supplementary Q&A sources
 │   ├── processed/
-│   │   ├── chunks_clean.jsonl    ← ★ Use this — 2,753 production chunks
+│   │   ├── chunks_clean.jsonl    ← ★ Use this, 2,753 production chunks
 │   │   └── eval_questions.jsonl  ← ★ 110-question gold evaluation set
 │   └── vector_store/             ← FAISS indexes (git-ignored, rebuild with embed.py)
 │       ├── general/              ← MiniLM-L6-v2 baseline (dim=384)
@@ -225,7 +225,7 @@ clinical-rag-audit/
 │   │   ├── config.py             ← Model registry + quantization config
 │   │   ├── prompts.py            ← RAG + no-RAG prompt templates
 │   │   ├── llm_wrapper.py        ← Unified LLMWrapper for all 3 models
-│   │   └── rag_ingest_documents.py       ← RAGPipeline.answer() — full retrieve→generate
+│   │   └── rag_ingest_documents.py       ← RAGPipeline.answer(), full retrieve→generate
 │   └── evaluation/
 │       └── ragas_scorer.py       ← RAGAS metrics (optional, GPU + API key)
 │
@@ -253,7 +253,7 @@ clinical-rag-audit/
 
 ---
 
-## Evaluation set — format reference
+## Evaluation set, format reference
 
 Each question in `data/processed/eval_questions.jsonl` follows this schema:
 
@@ -371,4 +371,4 @@ If you use this pipeline or dataset in your research:
 ## Licence
 
 Code: MIT. See `LICENSE`.
-Clinical documents: licences per source — see Corpus table above.
+Clinical documents: licences per source, see Corpus table above.
