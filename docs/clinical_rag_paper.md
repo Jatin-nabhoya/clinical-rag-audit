@@ -2,7 +2,7 @@
 
 **Jatin Nabhoya · Mohit Raiyani**
 Department of Computer Science, University of New Haven
-`jnabh1@unh.newhaven.edu` `mohit@unh.newhaven.edu`
+`jnabh1@unh.newhaven.edu` , `mraiy1@unh.newhaven.edu`
 
 ---
 
@@ -38,11 +38,11 @@ The remainder of this paper is organised as follows. Section 2 surveys related w
 
 ### 2.1 Retrieval-Augmented Generation
 
-Lewis et al. (2020) introduced RAG as a non-parametric memory extension for open-domain QA, combining a dense retrieval component with a seq2seq generator. Subsequent work has substantially extended this framework: Gao et al. (2023) survey modular RAG variants; Izacard and Grave (2021) demonstrate that fusing multiple retrieved passages improves downstream accuracy. Application to clinical and biomedical domains has accelerated [Singhal et al., 2023; Zhang et al., 2023], but systematic evaluation of hallucination across open-source LLMs under clinical RAG conditions remains limited.
+[Lewis et al. (2020)] introduced RAG as a non-parametric memory extension for open-domain QA, combining a dense retrieval component with a seq2seq generator. Subsequent work has substantially extended this framework: [Gao et al. (2023)] survey modular RAG variants; [Izacard and Grave (2021)] demonstrate that fusing multiple retrieved passages improves downstream accuracy. Application to clinical and biomedical domains has accelerated [Singhal et al., 2023; Zhang et al., 2023], but systematic evaluation of hallucination across open-source LLMs under clinical RAG conditions remains limited.
 
 ### 2.2 Hallucination in Neural Text Generation
 
-Ji et al. (2023) survey hallucination across NLG tasks, distinguishing intrinsic hallucination (contradicting the source) from extrinsic hallucination (introducing unverifiable content). Maynez et al. (2020) further separate faithfulness, grounding in the input, from factuality, alignment with world knowledge, a distinction critical to RAG evaluation: a model can be faithful to a retrieved chunk that is itself factually incorrect. Our taxonomy builds on this framework, adding tier-specific failure categories that reflect the clinical consequence of each failure mode.
+[Ji et al. (2023)] survey hallucination across NLG tasks, distinguishing intrinsic hallucination (contradicting the source) from extrinsic hallucination (introducing unverifiable content). [Maynez et al. (2020)] further separate faithfulness, grounding in the input, from factuality, alignment with world knowledge, a distinction critical to RAG evaluation: a model can be faithful to a retrieved chunk that is itself factually incorrect. Our taxonomy builds on this framework, adding tier-specific failure categories that reflect the clinical consequence of each failure mode.
 
 ### 2.3 RAG Evaluation Frameworks
 
@@ -143,8 +143,8 @@ The full 110-question set is available at `data/processed/eval_questions.jsonl` 
 
 Seven mutually exclusive labels are assigned by a rule-based classifier (`scripts/score_hallucinations.py`) requiring no external API. The classifier uses ROUGE-L against the gold answer and lexical overlap with the retrieved context as primary signals.
 
-| Category            | Triggered by                                             | Clinical risk level                                                |
-| ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| Category            | Triggered by                                             | Clinical risk level                                              |
+| ------------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
 | `correct_refusal` | Refused on unanswerable question                         | None, correct behaviour                                          |
 | `grounded`        | Answered; ROUGE-L ≥ 0.12 and/or gap acknowledged        | None, correct behaviour                                          |
 | `over_refusal`    | Refused on answerable, partial, or ambiguous question    | **Utility failure**, missed clinical guidance              |
@@ -163,7 +163,7 @@ The ROUGE-L threshold of 0.12 is empirically calibrated: score distribution on 4
 
 ### 5.1 Overall Taxonomy Distribution
 
-Table 2 shows the percentage of the 110 questions falling into each taxonomy category per model.
+Table 2 shows the percentage of the 110 questions falling into each taxonomy category per model; Figure 1 visualises the distribution.
 
 **Table 2: Overall taxonomy distribution (n = 110 per model)**
 
@@ -176,6 +176,10 @@ Table 2 shows the percentage of the 110 questions falling into each taxonomy cat
 †Correct = `correct_refusal` + `grounded`.
 
 Mistral-7B achieves the highest correctness at 52.7%, outperforming Llama-3-8B (39.1%) and Phi-3-mini (36.4%). The most striking observation is that **over-refusal (35.5–54.5%) is the single largest failure category across all three models**, substantially larger than fabrication (≤1.8%). Phi-3-mini shows the highest gap-filling and factual drift rates, indicating context neglect.
+<p align="center">
+  <img src="../results/reports/figures/taxonomy_distribution.png" width="92%" alt="Figure 1"/><br>
+  <em><strong>Figure 1:</strong> Overall hallucination taxonomy distribution (% of 110 questions per model). Over-refusal is the dominant failure category across all three models; fabrication is minimal (≤1.8%).</em>
+</p>
 
 ### 5.2 Per-Tier Correct Rate
 
@@ -189,6 +193,15 @@ Mistral-7B achieves the highest correctness at 52.7%, outperforming Llama-3-8B (
 | Unanswerable (n=29) | **100.0%** | 93.1%           | 96.6%      |
 
 Three observations stand out. First, **all three models perform well on unanswerable questions (93–100%)**, the safety-critical tier, but poorly on answerable questions (23–53%). Second, Llama-3-8B scores **0.0% on partial questions**, meaning it refused every partial question without providing any guidance from the partial evidence available. Third, Mistral-7B's advantage is concentrated in the answerable and partial tiers: 53.3% vs 23.3% on answerable, and 25.8% vs 0–3.2% on partial.
+<p align="center">
+  <img src="../results/reports/figures/per_tier_taxonomy.png" width="92%" alt="Figure 2"/><br>
+  <em><strong>Figure 2:</strong> Hallucination taxonomy breakdown by evaluation tier and model. Llama-3-8B scores 0% correct on partial questions; Mistral-7B dominates the answerable and partial tiers.</em>
+</p>
+
+<p align="center">
+  <img src="../results/reports/figures/refusal_heatmap.png" width="92%" alt="Figure 3"/><br>
+  <em><strong>Figure 3:</strong> Refusal rate heatmap by model and evaluation tier. All models achieve high refusal rates on unanswerable questions (93–100%), but over-refuse on answerable tiers.</em>
+</p>
 
 ### 5.3 Answer Quality: ROUGE-L and Context Overlap
 
@@ -201,6 +214,10 @@ Three observations stand out. First, **all three models perform well on unanswer
 | Phi-3-mini | 0.112 [0.094–0.131]           | 0.099 [0.083–0.115]           | 0.099           |
 
 ROUGE-L values are uniformly low (0.099–0.162), consistent with published findings on clinical text generation where synonymous medical paraphrasing is penalised [Maynez et al., 2020].
+<p align="center">
+  <img src="../results/reports/figures/rouge_l_comparison.png" width="92%" alt="Figure 4"/><br>
+  <em><strong>Figure 4:</strong> ROUGE-L scores with 95% bootstrap confidence intervals per model. Mistral-7B achieves the highest overall ROUGE-L (0.160); Phi-3-mini is consistently lowest (0.099).</em>
+</p>
 
 **Table 5: Context overlap (faithfulness proxy) on answered questions, with 95% bootstrap CI**
 
@@ -211,18 +228,26 @@ ROUGE-L values are uniformly low (0.099–0.162), consistent with published find
 | Phi-3-mini | 0.199           | [0.166–0.235] | 35         | Context-neglecting                 |
 
 Context overlap measures the fraction of content words in the model's answer that appear in the retrieved context chunks, a local faithfulness proxy that does not require a gold answer. Phi-3's score of 0.199 is 3× lower than Llama-3-8B (0.567) and 2.4× lower than Mistral-7B (0.483), with non-overlapping confidence intervals. When Phi-3 answers, approximately 80% of its content vocabulary is absent from the retrieved context.
+<p align="center">
+  <img src="../results/reports/figures/retrieval_vs_generation.png" width="92%" alt="Figure 5"/><br>
+  <em><strong>Figure 5:</strong> Context overlap (retrieval faithfulness proxy) vs ROUGE-L (generation quality) by model. Phi-3-mini occupies the low-overlap, low-ROUGE-L quadrant, confirming parametric knowledge dominance.</em>
+</p>
 
 ### 5.4 Answer Length as Behavioural Fingerprint
 
 **Table 6: Answer length distribution (words, non-refusals)**
 
-| Model      | Median       | IQR       | Interpretation                                  |
-| ---------- | ------------ | --------- | ----------------------------------------------- |
+| Model      | Median       | IQR       | Interpretation                                |
+| ---------- | ------------ | --------- | --------------------------------------------- |
 | Llama-3-8B | 47           | [37–59]  | Short, consistent, context-bounded            |
 | Mistral-7B | 53           | [36–74]  | Moderate, variable, engages selectively       |
 | Phi-3-mini | **71** | [50–110] | Long, highly variable, extends beyond context |
 
 Phi-3 produces answers approximately 51% longer than Llama-3-8B. This is inconsistent with Phi-3's low context overlap: longer answers with less contextual content indicate Phi-3 augments retrieved content with parametric completions rather than staying grounded.
+<p align="center">
+  <img src="../results/reports/figures/answer_length_violin.png" width="92%" alt="Figure 6"/><br>
+  <em><strong>Figure 6:</strong> Answer length distribution (words) by model for non-refused responses. Phi-3-mini produces substantially longer and more variable answers, consistent with parametric completion behaviour.</em>
+</p>
 
 ---
 
@@ -231,6 +256,10 @@ Phi-3 produces answers approximately 51% longer than Llama-3-8B. This is inconsi
 ### 6.1 Mistral-7B: Best Calibrated Model
 
 Mistral-7B achieves 52.7% overall correctness, 13.6 percentage points above Phi-3-mini and 13.4 above Llama-3-8B. Critically, this advantage comes from better *calibration* rather than reduced safety: Mistral correctly refuses 27/29 unanswerable questions (93.1%) while engaging with 22/30 answerable questions (73.3% engagement rate). The per-tier breakdown shows Mistral's advantage is concentrated in answerable and partial tiers (53.3% and 25.8% respectively), while all three models converge at 20–35% on ambiguous questions, suggesting underspecified query handling is an open problem uniformly across models at this scale.
+<p align="center">
+  <img src="../results/reports/figures/calibration_scatter.png" width="92%" alt="Figure 7"/><br>
+  <em><strong>Figure 7:</strong> Calibration scatter: answerable-tier engagement rate vs unanswerable-tier correct-refusal rate. Mistral-7B occupies the high-engagement, high-refusal quadrant — the ideal clinical RAG position.</em>
+</p>
 
 ### 6.2 Over-Refusal: The Primary Failure Mode
 
@@ -273,6 +302,10 @@ Gap-fill examples consistently show Phi-3 providing specific clinical values not
 ### 6.4 Interpreting Low ROUGE-L Scores
 
 ROUGE-L values of 0.099–0.162 will prompt concern about answer quality. Two observations contextualise this. First, ROUGE-L penalises synonymous medical paraphrasing: "myocardial infarction" and "heart attack" score as different tokens. High synonym density in clinical language is a known confound for ROUGE-based evaluation [Maynez et al., 2020]. Second, context overlap provides the complementary view: Llama-3's low ROUGE-L (0.132) combined with high context overlap (0.567) indicates faithful paraphrasing of retrieved content, the model reformulates rather than copies. Phi-3's low ROUGE-L (0.099) combined with low context overlap (0.199) indicates genuine content divergence. We recommend reporting ROUGE-L as a relative comparison tool and context overlap as the primary faithfulness proxy for this corpus.
+<p align="center">
+  <img src="../results/reports/figures/behavior_matrix.png" width="92%" alt="Figure 8"/><br>
+  <em><strong>Figure 8:</strong> Behavioral summary matrix: all key metrics across the three models. Each row is a metric; colour encodes relative performance, enabling rapid cross-model comparison.</em>
+</p>
 
 ---
 
