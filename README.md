@@ -86,6 +86,7 @@ clinical-rag-audit/
 ├── .gitignore
 ├── LICENSE
 ├── README.md
+├── README_USER_MANUAL.md         ← User documentation manual for researchers
 ├── requirements.txt
 │
 ├── configs/
@@ -93,24 +94,24 @@ clinical-rag-audit/
 │
 ├── data/
 │   ├── metadata.csv              ← Single source of truth, one row per document
-│   ├── raw/
+│   ├── raw/                      ← Downloaded files (git-ignored)
 │   │   ├── pmc/                  ← 94 PubMed Central open-access XML articles
 │   │   ├── medlineplus/          ← 3 MedlinePlus topic JSON responses
 │   │   ├── cdc_who/              ← 13 CDC & WHO HTML fact-sheet pages
-│   │   ├── medquad/              ← Reserved for MedQuAD Q&A XMLs (Phase 2)
-│   │   └── mimic_demo/           ← MIMIC-IV demo structured tables (see note below)
+│   │   ├── medquad/              ← MedQuAD Q&A XMLs (evaluation set source)
+│   │   └── mimic_demo/           ← MIMIC-IV demo tables (excluded, no free-text notes)
 │   └── processed/
-│       ├── chunks.jsonl              ← Raw pipeline output (2 896 chunks, kept as baseline)
-│       ├── chunks_clean.jsonl        ← Production-ready chunks (2 753 chunks) ← USE THIS
-│       ├── bioasq_diabetes_qa.json   ← BioASQ diabetes Q&A (evaluation set)
-│       ├── medquad_diabetes_qa.json  ← MedQuAD diabetes Q&A (evaluation set)
-│       └── eval_questions.jsonl      ← Phase 5 gold set (110 questions, annotating)
+│       ├── chunks.jsonl              ← Raw ingestion output (2,896 chunks, baseline)
+│       ├── chunks_clean.jsonl        ← Production-ready chunks (2,753 chunks) ← USE THIS
+│       ├── bioasq_diabetes_qa.json   ← BioASQ diabetes Q&A (smoke-test only)
+│       ├── medquad_diabetes_qa.json  ← MedQuAD diabetes Q&A (smoke-test only)
+│       └── eval_questions.jsonl      ← Gold evaluation set (110 questions, 4 tiers)
 │
 ├── scripts/
 │   ├── download_pmc.py           ← Fetches PMC open-access XMLs via NCBI E-utilities
 │   ├── download_medlineplus.py   ← Pulls MedlinePlus Connect API topic summaries
 │   ├── download_cdc.py           ← Scrapes CDC / WHO HTML fact-sheet pages
-│   ├── augment_corpus.py              ← Batch-fetches PMC articles for target domains + re-runs pipeline
+│   ├── augment_corpus.py         ← Batch-fetches PMC articles for underrepresented domains
 │   ├── log_metadata.py           ← Shared utility, appends rows to metadata.csv
 │   ├── verify_metadata.py        ← Validates metadata.csv & checks all files exist
 │   ├── extract_bioasq.py         ← Filters BioASQ JSON for diabetes Q&A pairs
@@ -118,35 +119,36 @@ clinical-rag-audit/
 │   ├── extract_mimic_demo.py     ← Builds structured summaries from MIMIC-IV tables
 │   ├── extract_text.py           ← Extracts plain text from XML / HTML / JSON files
 │   ├── chunk_documents.py        ← Token-aware RecursiveCharacterTextSplitter (512 tok / 50 overlap)
-│   ├── ingest_documents.py               ← Full pipeline: Extract → Chunk → Metadata → Save JSONL
-│   ├── relabel_domains.py        ← Keyword-scores existing chunks and fixes domain labels
+│   ├── ingest_documents.py       ← Full ingestion: Extract → Chunk → Metadata → JSONL
+│   ├── relabel_domains.py        ← Keyword-scores chunks and fixes domain labels
 │   ├── clean_chunks.py           ← Removes LaTeX noise, micro-chunks, re-labels domains
-│   ├── inspect_corpus.py               ← Prints stats + 10 random chunks from chunks_clean.jsonl
-│   ├── smoke_test.py        ← Pipeline smoke test: one question × all 3 LLMs
-│   ├── explore_corpus.py             ← Topic inventory: dense/thin/absent coverage map
-│   ├── generate_eval_questions.py    ← Generates 110-question gold eval set (Option B)
-│   ├── validate_questions.py         ← Validator: schema, chunk IDs, retrieval check
-│   ├── annotate_questions.py         ← Interactive CLI for manual annotation (optional)
-│   ├── run_inference.py      ← Runs eval set through all 3 LLMs on GPU server
-│   ├── analyze_hallucinations.py     ← Computes ROUGE-L, refusal rates, keyword recall
-│   ├── generate_report.py            ← Produces final hallucination audit report
-│   ├── score_hallucinations.py       ← Phase 6 taxonomy labeling + bootstrap CIs
-│   └── visualize_results.py          ← Phase 6 four publication-quality charts
+│   ├── inspect_corpus.py         ← Prints domain stats + 10 random chunks from chunks_clean.jsonl
+│   ├── smoke_test.py             ← Pipeline smoke test: one question × all 3 LLMs
+│   ├── explore_corpus.py         ← Topic inventory: dense/thin/absent coverage map
+│   ├── generate_eval_questions.py← Generates 110-question gold evaluation set
+│   ├── validate_questions.py     ← Validator: schema, chunk IDs, retrieval check
+│   ├── annotate_questions.py     ← Interactive CLI for manual annotation (optional)
+│   ├── run_inference.py          ← Runs evaluation through all 3 LLMs on GPU server
+│   ├── analyze_hallucinations.py ← Computes ROUGE-L, refusal rates, keyword recall
+│   ├── generate_report.py        ← Produces final hallucination audit report
+│   ├── score_hallucinations.py   ← Phase 6 taxonomy labeling + bootstrap CIs
+│   └── visualize_results.py      ← 8 publication-quality charts (300 DPI)
 │
 ├── docs/
-│   ├── annotation_guidelines.md  ← eval set tier philosophy, worked examples, edge cases
-│   └── taxonomy_definitions.md   ← Phase 6 hallucination taxonomy (operational defs, v1.1)
+│   ├── clinical_rag_paper.md     ← ACL-style conference paper (final submission)
+│   ├── annotation_guidelines.md  ← Eval set tier philosophy, worked examples, edge cases
+│   └── taxonomy_definitions.md   ← Hallucination taxonomy (operational defs, v1.1)
 │
 ├── notebooks/
 │   └── 00_setup_check.ipynb      ← Environment & import verification notebook
 │
 ├── src/
-│   ├── ingestion/                ← Document loading & chunking (Phase 2, complete)
-│   ├── retrieval/                ← Embeddings & FAISS (Phase 3, complete)
+│   ├── ingestion/                ← Document loading & chunking
+│   ├── retrieval/                ← Embeddings & FAISS
 │   │   ├── embed.py              ← Builds FAISS indexes for general + medical models
 │   │   ├── retriever.py          ← Retriever class: retrieve(query, k) + format_context()
-│   │   └── inspect_index.py      ← Sanity check: 5 queries × 4 tiers × 2 indexes
-│   ├── generation/               ← LLM wrappers & RAG pipeline (Phase 4, complete)
+│   │   └── inspect_index.py      ← Index validation: 5 queries × 4 tiers × 2 indexes
+│   ├── generation/               ← LLM wrappers & RAG pipeline
 │   │   ├── config.py             ← Model registry + lazy 4-bit NF4 BitsAndBytes config
 │   │   ├── prompts.py            ← RAG + no-RAG clinical prompt templates
 │   │   ├── llm_wrapper.py        ← Unified LLMWrapper (Llama-3 / Mistral / Phi-3)
@@ -156,32 +158,23 @@ clinical-rag-audit/
 │       └── ragas_scorer.py       ← faithfulness, answer_relevancy, context_precision/recall
 │
 └── results/
-    ├── eval_hallucination_audit/ ← PRIMARY evaluation outputs (filled after server run)
+    ├── eval_hallucination_audit/ ← PRIMARY evaluation outputs
     │   ├── llama3_8b/
-    │   │   ├── generations.jsonl ← 110 model generations
-    │   │   ├── metrics.json      ← per-question scores
-    │   │   └── run_config.json   ← reproducibility: temp, top-k, prompt version
-    │   ├── mistral_7b/           ← same structure
-    │   ├── phi3_mini/            ← same structure
-    │   ├── combined_results.csv  ← all 3 models merged
-    │   ├── metrics.csv           ← ROUGE-L, refusal rates, keyword recall
-    │   └── summary.json          ← aggregated per-model-per-tier stats
-    ├── pipeline_validation/      ← archived pipeline smoke test (NOT the evaluation)
-    │   ├── README.md             ← explains what this was and why it's not the eval
-    │   ├── llama3_8b_generations.json
-    │   ├── mistral_7b_generations.json
-    │   └── phi3_mini_generations.json
+    │   │   └── generations.jsonl ← 110 Llama-3 model answers
+    │   ├── mistral_7b/
+    │   │   └── generations.jsonl ← 110 Mistral-7B model answers
+    │   ├── phi3_mini/
+    │   │   └── generations.jsonl ← 110 Phi-3-mini model answers
+    │   ├── combined_results.csv  ← All 3 models merged (330 rows)
+    │   ├── metrics.csv           ← Per-question ROUGE-L, refusal rates, keyword recall
+    │   ├── taxonomy.csv          ← 330 rows, one 7-category label per (model, question)
+    │   ├── scoring_summary.json  ← Per-model × per-tier stats + bootstrap CIs
+    │   └── summary.json          ← Aggregated per-model-per-tier stats
+    ├── pipeline_validation/      ← Archived smoke test outputs (NOT the evaluation)
+    │   └── README.md             ← Explains what this was and why it differs from the eval
     └── reports/
-        ├── figures/                     ← 8 publication charts (300 DPI)
+        ├── figures/              ← 8 publication charts (300 DPI PNG)
         └── hallucination_analysis.json
-
-reports/
-└── phase8/                          ← Phase 8 final deliverable (self-contained)
-    ├── README.md                    ← deliverable index + key numbers
-    ├── final_report.md              ← 6-section technical report
-    ├── generate_analysis.py         ← reproducible analysis script
-    ├── tables/                      ← 5 CSV tables
-    └── figures/                     ← 8 charts (copies from results/reports/figures/)
 ```
 
 ---
@@ -549,8 +542,8 @@ All models run with **identical 4-bit NF4 quantization** so quantization is not 
 | `mistral` | `mistralai/Mistral-7B-Instruct-v0.2`  | 7B         |
 | `phi3`    | `microsoft/Phi-3-mini-4k-instruct`    | 3.8B       |
 
-> **Note:** Models require a CUDA GPU (≥ 16 GB VRAM, e.g. Kaggle T4).
-> `HF_TOKEN` in `.env` is required for Llama-3 (gated model).
+> **Note:** Models require a CUDA GPU (≥ 16 GB VRAM). Inference was run on a university GPU server accessed via SSH.
+> `HF_TOKEN` in `.env` is required for Llama-3 (gated model). Kaggle T4 was used for smoke-testing only.
 
 ---
 
@@ -904,7 +897,7 @@ docs/
 
 ### 8.1 Overview
 
-Phase 8 consolidates all findings into a conference-style paper at `docs/clinical_rag_paper.md`. All numbers are generated from real project data, no synthetic values.
+Phase 8 consolidates all findings into a conference-style paper at `docs/clinical_rag_paper.md` and a user manual at `README_USER_MANUAL.md`. All numbers are generated from real project data, no synthetic values.
 
 ---
 
@@ -928,7 +921,7 @@ No RAG-vs-no-RAG ablation was executed (GPU time constraint). We cannot claim "R
 
 ```bash
 # 1. Clone
-git clone https://github.com/<your-username>/clinical-rag-audit.git
+git clone https://github.com/Jatin-nabhoya/clinical-rag-audit.git
 cd clinical-rag-audit
 
 # 2. Create and activate venv
