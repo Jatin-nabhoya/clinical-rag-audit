@@ -1,4 +1,4 @@
-# Auditing Hallucination in Clinical Retrieval-Augmented Generation: A Comparative Study of Three Open-Source LLMs
+# Auditing Hallucination in Clinical Retrieval-Augmented Generation(RAG): A Comparative Study of Three Open-Source LLMs
 
 **Jatin Nabhoya · Mohit Raiyani**
 Department of Computer Science, University of New Haven
@@ -176,6 +176,7 @@ Table 2 shows the percentage of the 110 questions falling into each taxonomy cat
 †Correct = `correct_refusal` + `grounded`.
 
 Mistral-7B achieves the highest correctness at 52.7%, outperforming Llama-3-8B (39.1%) and Phi-3-mini (36.4%). The most striking observation is that **over-refusal (35.5–54.5%) is the single largest failure category across all three models**, substantially larger than fabrication (≤1.8%). Phi-3-mini shows the highest gap-filling and factual drift rates, indicating context neglect.
+
 <p align="center">
   <img src="../results/reports/figures/taxonomy_distribution.png" width="92%" alt="Figure 1"/><br>
   <em><strong>Figure 1:</strong> Overall hallucination taxonomy distribution (% of 110 questions per model). Over-refusal is the dominant failure category across all three models; fabrication is minimal (≤1.8%).</em>
@@ -193,6 +194,7 @@ Mistral-7B achieves the highest correctness at 52.7%, outperforming Llama-3-8B (
 | Unanswerable (n=29) | **100.0%** | 93.1%           | 96.6%      |
 
 Three observations stand out. First, **all three models perform well on unanswerable questions (93–100%)**, the safety-critical tier, but poorly on answerable questions (23–53%). Second, Llama-3-8B scores **0.0% on partial questions**, meaning it refused every partial question without providing any guidance from the partial evidence available. Third, Mistral-7B's advantage is concentrated in the answerable and partial tiers: 53.3% vs 23.3% on answerable, and 25.8% vs 0–3.2% on partial.
+
 <p align="center">
   <img src="../results/reports/figures/per_tier_taxonomy.png" width="92%" alt="Figure 2"/><br>
   <em><strong>Figure 2:</strong> Hallucination taxonomy breakdown by evaluation tier and model. Llama-3-8B scores 0% correct on partial questions; Mistral-7B dominates the answerable and partial tiers.</em>
@@ -214,6 +216,7 @@ Three observations stand out. First, **all three models perform well on unanswer
 | Phi-3-mini | 0.112 [0.094–0.131]           | 0.099 [0.083–0.115]           | 0.099           |
 
 ROUGE-L values are uniformly low (0.099–0.162), consistent with published findings on clinical text generation where synonymous medical paraphrasing is penalised [Maynez et al., 2020].
+
 <p align="center">
   <img src="../results/reports/figures/rouge_l_comparison.png" width="92%" alt="Figure 4"/><br>
   <em><strong>Figure 4:</strong> ROUGE-L scores with 95% bootstrap confidence intervals per model. Mistral-7B achieves the highest overall ROUGE-L (0.160); Phi-3-mini is consistently lowest (0.099).</em>
@@ -228,6 +231,7 @@ ROUGE-L values are uniformly low (0.099–0.162), consistent with published find
 | Phi-3-mini | 0.199           | [0.166–0.235] | 35         | Context-neglecting                 |
 
 Context overlap measures the fraction of content words in the model's answer that appear in the retrieved context chunks, a local faithfulness proxy that does not require a gold answer. Phi-3's score of 0.199 is 3× lower than Llama-3-8B (0.567) and 2.4× lower than Mistral-7B (0.483), with non-overlapping confidence intervals. When Phi-3 answers, approximately 80% of its content vocabulary is absent from the retrieved context.
+
 <p align="center">
   <img src="../results/reports/figures/retrieval_vs_generation.png" width="92%" alt="Figure 5"/><br>
   <em><strong>Figure 5:</strong> Context overlap (retrieval faithfulness proxy) vs ROUGE-L (generation quality) by model. Phi-3-mini occupies the low-overlap, low-ROUGE-L quadrant, confirming parametric knowledge dominance.</em>
@@ -244,6 +248,7 @@ Context overlap measures the fraction of content words in the model's answer tha
 | Phi-3-mini | **71** | [50–110] | Long, highly variable, extends beyond context |
 
 Phi-3 produces answers approximately 51% longer than Llama-3-8B. This is inconsistent with Phi-3's low context overlap: longer answers with less contextual content indicate Phi-3 augments retrieved content with parametric completions rather than staying grounded.
+
 <p align="center">
   <img src="../results/reports/figures/answer_length_violin.png" width="92%" alt="Figure 6"/><br>
   <em><strong>Figure 6:</strong> Answer length distribution (words) by model for non-refused responses. Phi-3-mini produces substantially longer and more variable answers, consistent with parametric completion behaviour.</em>
@@ -256,9 +261,10 @@ Phi-3 produces answers approximately 51% longer than Llama-3-8B. This is inconsi
 ### 6.1 Mistral-7B: Best Calibrated Model
 
 Mistral-7B achieves 52.7% overall correctness, 13.6 percentage points above Phi-3-mini and 13.4 above Llama-3-8B. Critically, this advantage comes from better *calibration* rather than reduced safety: Mistral correctly refuses 27/29 unanswerable questions (93.1%) while engaging with 22/30 answerable questions (73.3% engagement rate). The per-tier breakdown shows Mistral's advantage is concentrated in answerable and partial tiers (53.3% and 25.8% respectively), while all three models converge at 20–35% on ambiguous questions, suggesting underspecified query handling is an open problem uniformly across models at this scale.
+
 <p align="center">
   <img src="../results/reports/figures/calibration_scatter.png" width="92%" alt="Figure 7"/><br>
-  <em><strong>Figure 7:</strong> Calibration scatter: answerable-tier engagement rate vs unanswerable-tier correct-refusal rate. Mistral-7B occupies the high-engagement, high-refusal quadrant — the ideal clinical RAG position.</em>
+  <em><strong>Figure 7:</strong> Calibration scatter: answerable-tier engagement rate vs unanswerable-tier correct-refusal rate. Mistral-7B occupies the high-engagement, high-refusal quadrant, the ideal clinical RAG position.</em>
 </p>
 
 ### 6.2 Over-Refusal: The Primary Failure Mode
@@ -302,6 +308,7 @@ Gap-fill examples consistently show Phi-3 providing specific clinical values not
 ### 6.4 Interpreting Low ROUGE-L Scores
 
 ROUGE-L values of 0.099–0.162 will prompt concern about answer quality. Two observations contextualise this. First, ROUGE-L penalises synonymous medical paraphrasing: "myocardial infarction" and "heart attack" score as different tokens. High synonym density in clinical language is a known confound for ROUGE-based evaluation [Maynez et al., 2020]. Second, context overlap provides the complementary view: Llama-3's low ROUGE-L (0.132) combined with high context overlap (0.567) indicates faithful paraphrasing of retrieved content, the model reformulates rather than copies. Phi-3's low ROUGE-L (0.099) combined with low context overlap (0.199) indicates genuine content divergence. We recommend reporting ROUGE-L as a relative comparison tool and context overlap as the primary faithfulness proxy for this corpus.
+
 <p align="center">
   <img src="../results/reports/figures/behavior_matrix.png" width="92%" alt="Figure 8"/><br>
   <em><strong>Figure 8:</strong> Behavioral summary matrix: all key metrics across the three models. Each row is a metric; colour encodes relative performance, enabling rapid cross-model comparison.</em>
@@ -428,11 +435,11 @@ python scripts/generate_eval_questions.py
 python scripts/validate_questions.py --no-retrieval
 ```
 
-**Step 2, University GPU server (SSH): LLM generation only**
+**Step 2,personal GPU server (SSH): LLM generation only**
 
 ```bash
 # SSH into the university GPU server
-ssh <netid>@<university-gpu-server-hostname>
+ssh <netid>@<personal-gpu-server-hostname>
 
 # Clone the repo on the server (or rsync your local copy)
 git clone https://github.com/Jatin-nabhoya/clinical-rag-audit.git

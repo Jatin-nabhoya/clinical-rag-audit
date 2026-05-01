@@ -40,3 +40,4 @@ Thumbs.db
 # (remove any old blanket ignore that was accidentally added)
 # Personal pipeline diagram (local only)
 docs/rag_pipeline.html
+docs/Clinical_RAG_Paper_Skeleton.docx
